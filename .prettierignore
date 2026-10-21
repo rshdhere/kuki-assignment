@@ -1,0 +1,8 @@
+node_modules
+.next
+.turbo
+dist
+out
+bun.lock
+skills-lock.json
+.claude

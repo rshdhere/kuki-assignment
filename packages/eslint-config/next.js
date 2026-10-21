@@ -2,7 +2,7 @@ import { globalIgnores } from "eslint/config";
 import pluginReactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import pluginNext from "@next/eslint-plugin-next";
-import { config as baseConfig } from "./base.js";
+import { config as baseConfig } from "@repo/eslint-config/base";
 
 /**
  * A custom ESLint configuration for libraries that use Next.js.

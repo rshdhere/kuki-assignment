@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
+    "./lib/*": "./src/lib/*.ts",
     "./*": "./src/*.tsx"
   },
   "scripts": {
@@ -20,7 +21,9 @@
     "typescript": "7.0.2"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "tailwind-merge": "^3.7.0"
   }
 }
