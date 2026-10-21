@@ -31,6 +31,7 @@ export function FactsExplorer({
     .map((fact, index) => ({ fact, index }))
     .filter(({ fact }) => filter === "all" || fact.origin === filter);
   const current = facts[picked] ?? facts[0];
+  if (!current) return null;
 
   const pick = (index: number) => {
     setPicked(index);
@@ -125,7 +126,10 @@ export function FactsExplorer({
                     </td>
                     <td>
                       {fact.page && (
-                        <span className="meta" style={{ color: "var(--text-2)" }}>
+                        <span
+                          className="meta"
+                          style={{ color: "var(--text-2)" }}
+                        >
                           {fact.page}{" "}
                         </span>
                       )}
@@ -196,7 +200,10 @@ export function FactsExplorer({
                   style={{ width: "22%", flex: "none" }}
                 />
                 {current.sourceLine ? (
-                  <span className={`hl ${flip ? "b" : "a"}`} style={{ flex: 1 }}>
+                  <span
+                    className={`hl ${flip ? "b" : "a"}`}
+                    style={{ flex: 1 }}
+                  >
                     {current.sourceLine}
                   </span>
                 ) : (
