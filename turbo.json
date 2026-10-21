@@ -13,7 +13,15 @@
     "check-types": {
       "dependsOn": ["^check-types"]
     },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "test:e2e": {
+      "env": ["CI", "E2E_PORT"],
+      "cache": false
+    },
     "dev": {
+      "env": ["PORT"],
       "cache": false,
       "persistent": true
     }

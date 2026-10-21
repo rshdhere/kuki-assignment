@@ -16,5 +16,13 @@
     "@types/bun": "latest",
     "eslint": "10.9.1",
     "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "@kuki/openapi": "workspace:*",
+    "@hono/swagger-ui": "^0.6.1",
+    "hono": "^4.13.13"
+  },
+  "exports": {
+    "./app": "./src/app.ts"
   }
 }

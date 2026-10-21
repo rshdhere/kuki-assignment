@@ -1,0 +1,18 @@
+{
+  "extends": "@kuki/typescript-config/base.json",
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["specs", "playwright.config.ts"],
+  "exclude": ["node_modules"]
+}

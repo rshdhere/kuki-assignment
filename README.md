@@ -7,9 +7,12 @@ Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1Tb
 ## Structure
 
 - `apps/client`: Next.js frontend
-- `apps/server`: Bun backend
+- `apps/server`: Bun + Hono backend (Swagger UI at `/docs`, spec at `/openapi.yaml`)
+- `packages/openapi`: hand-written OpenAPI spec (`openapi.yaml`, `@kuki/openapi`)
 - `packages/api`, `config`, `controllers`, `drizzle`, `handlers`, `services`, `types`, `validators`: server-side packages (`@kuki/<name>`)
 - `packages/ui`: shared React components and utilities (`@kuki/ui`)
+- `tests/integration`: Vitest + Supertest integration tests against the server
+- `tests/e2e`: Playwright end-to-end tests against the client
 - `tooling/eslint-config`: shared ESLint config (`@kuki/eslint-config`)
 - `tooling/typescript-config`: shared tsconfigs (`@kuki/typescript-config`)
 
@@ -28,4 +31,8 @@ bun run dev
 | `bun run build`       | Build all apps and packages      |
 | `bun run lint`        | Lint all apps and packages       |
 | `bun run check-types` | Type-check all apps and packages |
+| `bun run test`        | Run integration tests            |
+| `bun run test:e2e`    | Run Playwright end-to-end tests  |
 | `bun run format`      | Format the repo with Prettier    |
+
+Before the first e2e run, install the browser: `cd tests/e2e && bunx playwright install chromium`.
