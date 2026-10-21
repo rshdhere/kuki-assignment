@@ -6,3 +6,6 @@ out
 bun.lock
 skills-lock.json
 .claude
+test-results
+playwright-report
+blob-report
