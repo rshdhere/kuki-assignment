@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/create-next-app).
+# Client
 
-## Getting Started
+Next.js dashboard for the KuKi sustainability evidence workflow. It is the coded version of the [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1TbMWEW) Figma file (Evergreen theme).
 
-First, run the development server:
+## Routes
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| Route             | Screen           | What it shows                                                                        |
+| ----------------- | ---------------- | ------------------------------------------------------------------------------------ |
+| `/`               | Documents        | Upload, batch summary, processing queue with job states, activity and queue settings |
+| `/facts`          | Extracted facts  | Facts for one document, reported vs calculated, source preview with the highlight    |
+| `/ask`            | Ask              | An answer with citations, the calculation, sources and documents in scope            |
+| `/financial-year` | Financial year   | Indian FY totals, month-by-month coverage, document coverage and assumptions         |
+| `/evaluation`     | Evaluation       | Baseline vs improved runs, score by check, the schema change and the 12 cases        |
+
+All screens share `app/(dashboard)/layout.tsx`, which renders the sidebar.
+
+## Where things live
+
+```text
+app/
+├── layout.tsx              # fonts (Geist, Geist Mono) and metadata
+├── globals.css             # brand tokens, components, motion
+└── (dashboard)/            # one folder per screen
+components/
+├── sidebar.tsx             # navigation, active state from the URL
+├── motion-switch.tsx       # "Pause animations" (stops every loop)
+├── facts-explorer.tsx      # origin filter + highlight that follows the picked fact
+├── upload-button.tsx       # toast with a draining timer
+├── copy-answer.tsx
+├── evaluation-shell.tsx    # run state shared by the top bar and the page
+├── icon.tsx                # Lucide paths, no icon dependency
+└── ui.tsx                  # Badge, Status, StatCard and other small pieces
+lib/
+└── data.ts                 # sample data, read by hand from the six documents
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Data
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`lib/data.ts` holds the values the screens show. Document figures (amounts, kWh, periods, cells) are real values from the assignment dataset. Job states and evaluation marks are example values until `apps/server` exposes the documents, facts, answers and eval results endpoints. Replace the imports in each page with fetches from the server when those exist.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load Inter, a custom Google Font.
+## Design rules kept in code
 
-## Learn More
+- Yellow (`--mark`) only marks evidence: cited numbers, the source line, citation hover.
+- Every button and control has default, hover, focus-visible, pressed and disabled states.
+- Motion is 120–480 ms with ease-out. Loops only show live work, and "Pause animations" or the OS reduced-motion setting stops them.
+- Status colours always come with an icon and a word.
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```sh
+bun run dev          # next dev on port 3000
+bun run lint         # ESLint
+bun run check-types  # next typegen && tsc --noEmit
+```
