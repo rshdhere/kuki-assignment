@@ -2,16 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Icon, type IconName } from "@/components/icon";
+import { CommandPalette } from "@/components/command-palette";
+import { Icon } from "@/components/icon";
 import { MotionSwitch } from "@/components/motion-switch";
-
-const nav: { href: string; label: string; icon: IconName; count?: string }[] = [
-  { href: "/", label: "Documents", icon: "doc", count: "7" },
-  { href: "/facts", label: "Extracted facts", icon: "table" },
-  { href: "/ask", label: "Ask", icon: "message" },
-  { href: "/financial-year", label: "Financial year", icon: "calendar" },
-  { href: "/evaluation", label: "Evaluation", icon: "flask" },
-];
+import { nav } from "@/lib/nav";
 
 const recent: Record<string, { title: string; items: string[] }> = {
   "/ask": {
@@ -59,11 +53,7 @@ export function Sidebar() {
         <Icon name="chevrons" />
       </button>
 
-      <button type="button" className="search">
-        <Icon name="search" size={15} />
-        <span>Search</span>
-        <kbd className="kbd">⌘K</kbd>
-      </button>
+      <CommandPalette />
 
       <nav className="nav" aria-label="Workspace">
         <div className="nav-label">Workspace</div>
