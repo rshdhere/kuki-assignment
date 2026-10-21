@@ -1,10 +1,10 @@
 {
-  "extends": "@repo/typescript-config/react-library.json",
+  "extends": "@kuki/typescript-config/react-library.json",
   "compilerOptions": {
     "outDir": "dist",
     "strictNullChecks": true,
     "paths": {
-      "@repo/ui/*": ["./src/*"]
+      "@kuki/ui/*": ["./src/*"]
     }
   },
   "include": ["src"],

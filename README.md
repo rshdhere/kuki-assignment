@@ -6,11 +6,12 @@ Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1Tb
 
 ## Structure
 
-- `apps/web`: Next.js app
-- `apps/docs`: Next.js app
-- `packages/ui`: shared React components and utilities (`@repo/ui`)
-- `packages/eslint-config`: shared ESLint config (`@repo/eslint-config`)
-- `packages/typescript-config`: shared tsconfigs (`@repo/typescript-config`)
+- `apps/client`: Next.js frontend
+- `apps/server`: Bun backend
+- `packages/api`, `config`, `controllers`, `drizzle`, `handlers`, `services`, `types`, `validators`: server-side packages (`@kuki/<name>`)
+- `packages/ui`: shared React components and utilities (`@kuki/ui`)
+- `tooling/eslint-config`: shared ESLint config (`@kuki/eslint-config`)
+- `tooling/typescript-config`: shared tsconfigs (`@kuki/typescript-config`)
 
 ## Getting started
 
