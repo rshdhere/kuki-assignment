@@ -1,0 +1,18 @@
+{
+  "extends": "@kuki/typescript-config/base.json",
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["bun"],
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "paths": {
+      "@kuki/aws/*": ["./src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}

@@ -9,7 +9,9 @@ Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1Tb
 - `apps/client`: Next.js frontend
 - `apps/server`: Bun + Hono backend (Swagger UI at `/docs`, spec at `/openapi.yaml`)
 - `packages/openapi`: hand-written OpenAPI spec (`openapi.yaml`, `@kuki/openapi`)
-- `packages/api`, `config`, `controllers`, `drizzle`, `handlers`, `services`, `types`, `validators`: server-side packages (`@kuki/<name>`)
+- `packages/api`, `config`, `controllers`, `drizzle`, `handlers`, `types`, `validators`: server-side packages (`@kuki/<name>`)
+- `packages/services/aws`: SQS and S3 clients (`@kuki/aws`)
+- `packages/services/email`: Resend client (`@kuki/email`)
 - `packages/ui`: shared React components and utilities (`@kuki/ui`)
 - `tests/integration`: Vitest + Supertest integration tests against the server
 - `tests/e2e`: Playwright end-to-end tests against the client

@@ -10,7 +10,7 @@
     "declaration": false,
     "declarationMap": false,
     "paths": {
-      "@kuki/services/*": ["./src/*"]
+      "@kuki/email/*": ["./src/*"]
     }
   },
   "include": ["src"],

@@ -14,14 +14,15 @@
       "dependsOn": ["^check-types"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "env": ["AWS_*", "RESEND_API_KEY"]
     },
     "test:e2e": {
       "env": ["CI", "E2E_PORT"],
       "cache": false
     },
     "dev": {
-      "env": ["PORT"],
+      "env": ["PORT", "AWS_*", "RESEND_API_KEY"],
       "cache": false,
       "persistent": true
     }
