@@ -7,7 +7,9 @@ test("documents page renders", async ({ page }) => {
   await expect(
     page.getByRole("heading", { level: 1, name: "Documents" }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Upload files" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Upload files" }),
+  ).toBeVisible();
 });
 
 test("upload shows a queued toast", async ({ page }) => {
@@ -47,7 +49,5 @@ test("picking a calculated fact explains there is nothing to highlight", async (
 
   await page.getByRole("button", { name: "Calculated" }).click();
   await page.getByRole("button", { name: "Average per day" }).click();
-  await expect(
-    page.getByText('"Average per day" is calculated'),
-  ).toBeVisible();
+  await expect(page.getByText('"Average per day" is calculated')).toBeVisible();
 });

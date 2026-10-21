@@ -139,7 +139,9 @@ export default function DocumentsPage() {
                         </td>
                         <td
                           className={
-                            d.organisation === "Not stated" ? "muted" : undefined
+                            d.organisation === "Not stated"
+                              ? "muted"
+                              : undefined
                           }
                         >
                           {d.organisation}
@@ -170,11 +172,7 @@ export default function DocumentsPage() {
           <div className="foot">
             <span>Example states · 0 of 7 rows selected</span>
             <div style={{ display: "flex", gap: 8 }}>
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                disabled
-              >
+              <button type="button" className="btn btn-outline btn-sm" disabled>
                 Previous
               </button>
               <button type="button" className="btn btn-outline btn-sm">
@@ -204,10 +202,7 @@ export default function DocumentsPage() {
             </div>
           </section>
           <section className="card pad" aria-label="Queue">
-            <CardHead
-              title="Queue"
-              desc="pg-boss settings and current state"
-            />
+            <CardHead title="Queue" desc="pg-boss settings and current state" />
             <dl className="kv">
               {queue.map(([k, v]) => (
                 <div key={k} style={{ display: "contents" }}>

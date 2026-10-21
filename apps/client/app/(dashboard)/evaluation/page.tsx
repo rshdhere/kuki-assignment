@@ -86,12 +86,22 @@ export default function EvaluationPage() {
                 color: "var(--text-2)",
               }}
             >
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <span className="legend-swatch" style={{ background: "var(--sage)" }} />
+              <span
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <span
+                  className="legend-swatch"
+                  style={{ background: "var(--sage)" }}
+                />
                 r_01
               </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <span className="legend-swatch" style={{ background: "var(--emerald)" }} />
+              <span
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <span
+                  className="legend-swatch"
+                  style={{ background: "var(--emerald)" }}
+                />
                 r_02
               </span>
             </div>

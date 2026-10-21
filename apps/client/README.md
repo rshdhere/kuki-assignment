@@ -4,13 +4,13 @@ Next.js dashboard for the KuKi sustainability evidence workflow. It is the coded
 
 ## Routes
 
-| Route             | Screen           | What it shows                                                                        |
-| ----------------- | ---------------- | ------------------------------------------------------------------------------------ |
-| `/`               | Documents        | Upload, batch summary, processing queue with job states, activity and queue settings |
-| `/facts`          | Extracted facts  | Facts for one document, reported vs calculated, source preview with the highlight    |
-| `/ask`            | Ask              | An answer with citations, the calculation, sources and documents in scope            |
-| `/financial-year` | Financial year   | Indian FY totals, month-by-month coverage, document coverage and assumptions         |
-| `/evaluation`     | Evaluation       | Baseline vs improved runs, score by check, the schema change and the 12 cases        |
+| Route             | Screen          | What it shows                                                                        |
+| ----------------- | --------------- | ------------------------------------------------------------------------------------ |
+| `/`               | Documents       | Upload, batch summary, processing queue with job states, activity and queue settings |
+| `/facts`          | Extracted facts | Facts for one document, reported vs calculated, source preview with the highlight    |
+| `/ask`            | Ask             | An answer with citations, the calculation, sources and documents in scope            |
+| `/financial-year` | Financial year  | Indian FY totals, month-by-month coverage, document coverage and assumptions         |
+| `/evaluation`     | Evaluation      | Baseline vs improved runs, score by check, the schema change and the 12 cases        |
 
 All screens share `app/(dashboard)/layout.tsx`, which renders the sidebar.
 

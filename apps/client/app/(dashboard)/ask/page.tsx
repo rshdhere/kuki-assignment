@@ -103,12 +103,14 @@ export default function AskPage() {
                 </span>
               </div>
               <h2 style={{ fontSize: 18, lineHeight: 1.4, fontWeight: 600 }}>
-                No. The workbook reports three different annual totals for
-                2026.
+                No. The workbook reports three different annual totals for 2026.
               </h2>
               <p style={{ color: "var(--text-2)", maxWidth: "68ch" }}>
                 The twelve monthly rows add up to{" "}
-                <b className="mark" style={{ fontWeight: 600, color: "var(--ink)" }}>
+                <b
+                  className="mark"
+                  style={{ fontWeight: 600, color: "var(--ink)" }}
+                >
                   2,426,123 kWh
                 </b>
                 <Cite n={1} />. The monthly sheet&apos;s annual row is 1,000 kWh
@@ -147,7 +149,10 @@ export default function AskPage() {
                           <td>
                             <OriginBadge origin={t.origin} />
                           </td>
-                          <td className="meta" style={{ color: "var(--text-2)" }}>
+                          <td
+                            className="meta"
+                            style={{ color: "var(--text-2)" }}
+                          >
                             {t.cell}
                           </td>
                         </tr>
@@ -187,7 +192,10 @@ sum(C3:C5) − Quarterly!D2  Q1    −1,000`}</pre>
                       <span className="src-n">{i + 1}</span>
                       <span style={{ flex: 1, minWidth: 0 }}>
                         {sheet}{" "}
-                        <span className="meta" style={{ color: "var(--text-2)" }}>
+                        <span
+                          className="meta"
+                          style={{ color: "var(--text-2)" }}
+                        >
                           {cell}
                         </span>
                       </span>
@@ -275,7 +283,11 @@ sum(C3:C5) − Quarterly!D2  Q1    −1,000`}</pre>
               ))}
             </div>
           </section>
-          <section className="card pad" aria-label="Earlier answers" style={{ gap: 6 }}>
+          <section
+            className="card pad"
+            aria-label="Earlier answers"
+            style={{ gap: 6 }}
+          >
             <h2 className="card-h" style={{ marginBottom: 6 }}>
               Earlier answers
             </h2>

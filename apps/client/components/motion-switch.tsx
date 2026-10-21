@@ -10,8 +10,7 @@ const subscribe = (onChange: () => void) => {
   window.addEventListener(EVENT, onChange);
   return () => window.removeEventListener(EVENT, onChange);
 };
-const getSnapshot = () =>
-  document.documentElement.classList.contains("paused");
+const getSnapshot = () => document.documentElement.classList.contains("paused");
 const getServerSnapshot = () => false;
 
 function setPaused(paused: boolean) {
@@ -30,7 +29,11 @@ function setPaused(paused: boolean) {
  * reduced-motion setting is handled separately in globals.css.
  */
 export function MotionSwitch() {
-  const paused = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const paused = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
   useEffect(() => {
     try {

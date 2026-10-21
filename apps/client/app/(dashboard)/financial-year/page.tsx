@@ -35,7 +35,9 @@ export default function FinancialYearPage() {
                   href="/financial-year"
                   className="num"
                   aria-current={y === CURRENT ? "page" : undefined}
-                  style={y === "2023-24" ? { color: "var(--muted)" } : undefined}
+                  style={
+                    y === "2023-24" ? { color: "var(--muted)" } : undefined
+                  }
                 >
                   {y}
                 </Link>
@@ -50,11 +52,7 @@ export default function FinancialYearPage() {
             value={total.toLocaleString("en-US")}
             unit="kWh"
             foot="Sum of monthly rows, Apr – Dec 2026"
-            top={
-              <Badge kind="warn">
-                {recorded.length} of 12 months
-              </Badge>
-            }
+            top={<Badge kind="warn">{recorded.length} of 12 months</Badge>}
           />
           <StatCard
             label="Grid supply"
@@ -88,7 +86,11 @@ export default function FinancialYearPage() {
           />
         </section>
 
-        <section className="card pad" aria-label="Monthly electricity" style={{ gap: 16 }}>
+        <section
+          className="card pad"
+          aria-label="Monthly electricity"
+          style={{ gap: 16 }}
+        >
           <div className="card-head" style={{ alignItems: "flex-start" }}>
             <CardHead
               title="Monthly electricity"
@@ -104,7 +106,9 @@ export default function FinancialYearPage() {
                 alignItems: "center",
               }}
             >
-              <Legend swatch={{ background: "var(--emerald)" }}>Recorded</Legend>
+              <Legend swatch={{ background: "var(--emerald)" }}>
+                Recorded
+              </Legend>
               <Legend swatch={{}} className="stripes">
                 Month not over
               </Legend>
@@ -144,10 +148,18 @@ export default function FinancialYearPage() {
                   gap: 8,
                 }}
               >
-                <div className="bars" role="img" aria-label="Monthly electricity for FY 2026-27: April to December recorded, January to March missing">
+                <div
+                  className="bars"
+                  role="img"
+                  aria-label="Monthly electricity for FY 2026-27: April to December recorded, January to March missing"
+                >
                   {fy202627Months.map((m, i) =>
                     m.kwh === null ? (
-                      <i key={m.month} className="gap" style={{ height: PLOT_HEIGHT - 1 }} />
+                      <i
+                        key={m.month}
+                        className="gap"
+                        style={{ height: PLOT_HEIGHT - 1 }}
+                      />
                     ) : (
                       <i
                         key={m.month}
@@ -158,7 +170,9 @@ export default function FinancialYearPage() {
                           animation: m.open
                             ? `grow 700ms var(--ease-out) ${100 + i * 40}ms both, stripes 1.2s linear infinite`
                             : undefined,
-                          animationDelay: m.open ? undefined : `${100 + i * 40}ms`,
+                          animationDelay: m.open
+                            ? undefined
+                            : `${100 + i * 40}ms`,
                         }}
                       />
                     ),
@@ -176,7 +190,10 @@ export default function FinancialYearPage() {
                       >
                         {m.month}
                       </span>
-                      <span className="mono" style={{ display: "block", fontSize: 11 }}>
+                      <span
+                        className="mono"
+                        style={{ display: "block", fontSize: 11 }}
+                      >
                         {m.kwh === null ? "—" : `${(m.kwh / 1000).toFixed(1)}k`}
                       </span>
                     </span>
@@ -188,7 +205,11 @@ export default function FinancialYearPage() {
         </section>
 
         <div className="row">
-          <section className="card grow" aria-label="Coverage by document" style={{ gap: 0 }}>
+          <section
+            className="card grow"
+            aria-label="Coverage by document"
+            style={{ gap: 0 }}
+          >
             <div style={{ padding: "16px 16px 12px" }}>
               <CardHead
                 title="Coverage by document"

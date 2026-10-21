@@ -28,7 +28,9 @@ export function Badge({
 
 /** Reported values come from a document; calculated values come from KuKi. */
 export function OriginBadge({ origin }: { origin: Origin }) {
-  return <Badge kind={origin === "Calculated" ? "calc" : "default"}>{origin}</Badge>;
+  return (
+    <Badge kind={origin === "Calculated" ? "calc" : "default"}>{origin}</Badge>
+  );
 }
 
 export function Status({
@@ -49,9 +51,7 @@ export function Status({
     }[state];
   return (
     <span className="status">
-      {state === "succeeded" && (
-        <Icon name="check-circle" color="var(--ok)" />
-      )}
+      {state === "succeeded" && <Icon name="check-circle" color="var(--ok)" />}
       {state === "extracting" && (
         <Icon name="loader" color="var(--calc)" className="spin" />
       )}
@@ -158,7 +158,10 @@ export function StatCard({
         <span className="stat-label">{label}</span>
         {top}
       </div>
-      <div className="stat" style={muted ? { color: "var(--muted)" } : undefined}>
+      <div
+        className="stat"
+        style={muted ? { color: "var(--muted)" } : undefined}
+      >
         {value}
         {unit && <small> {unit}</small>}
       </div>

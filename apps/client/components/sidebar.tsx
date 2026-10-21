@@ -43,7 +43,8 @@ export function Sidebar() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
   const list =
-    recent[pathname] ?? (pathname === "/financial-year" ? null : recentDocuments);
+    recent[pathname] ??
+    (pathname === "/financial-year" ? null : recentDocuments);
 
   return (
     <aside className="side" aria-label="Sidebar">
