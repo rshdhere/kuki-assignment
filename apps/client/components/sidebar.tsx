@@ -41,7 +41,7 @@ export function Sidebar() {
     (pathname === "/financial-year" ? null : recentDocuments);
 
   return (
-    <aside className="side" aria-label="Sidebar">
+    <aside id="sidebar" className="side" aria-label="Sidebar">
       <button type="button" className="ws">
         <span className="logo">
           <span>K</span>

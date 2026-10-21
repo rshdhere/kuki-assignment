@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Icon } from "@/components/icon";
+import { SidebarToggle } from "@/components/sidebar-toggle";
 
 export interface Crumb {
   label: string;
@@ -16,9 +16,7 @@ export function Topbar({
 }) {
   return (
     <header className="topbar">
-      <button type="button" className="icon-btn" aria-label="Toggle sidebar">
-        <Icon name="panel" />
-      </button>
+      <SidebarToggle />
       <span className="vsep" />
       <nav className="crumbs" aria-label="Breadcrumb">
         <span>KuKi</span>

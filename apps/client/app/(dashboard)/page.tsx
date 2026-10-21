@@ -1,13 +1,7 @@
 import { Icon } from "@/components/icon";
 import { Topbar } from "@/components/topbar";
-import {
-  Badge,
-  CardHead,
-  FilterButton,
-  PageHeading,
-  StatCard,
-  Status,
-} from "@/components/ui";
+import { DocumentsTable } from "@/components/documents-table";
+import { Badge, CardHead, PageHeading, StatCard } from "@/components/ui";
 import { UploadButton } from "@/components/upload-button";
 import { activity, documents, queue } from "@/lib/data";
 
@@ -72,115 +66,7 @@ export default function DocumentsPage() {
           <input id="upload" type="file" multiple className="sr" />
         </label>
 
-        <section className="card" aria-label="Processing queue">
-          <div className="toolbar">
-            <label htmlFor="filter" className="sr">
-              Filter files
-            </label>
-            <input
-              id="filter"
-              type="text"
-              className="field"
-              placeholder="Filter files…"
-            />
-            <FilterButton>Status</FilterButton>
-            <FilterButton>Type</FilterButton>
-            <button
-              type="button"
-              className="btn btn-outline btn-sm"
-              style={{ marginLeft: "auto" }}
-            >
-              Columns
-            </button>
-          </div>
-          <div className="scroll bt">
-            <table className="tbl" style={{ minWidth: 960 }}>
-              <thead>
-                <tr>
-                  <th style={{ width: 32 }}>
-                    <input
-                      type="checkbox"
-                      className="check"
-                      aria-label="Select all"
-                    />
-                  </th>
-                  <th>File</th>
-                  <th>Type</th>
-                  <th>Organisation</th>
-                  <th>Period</th>
-                  <th>Status</th>
-                  <th>Attempts</th>
-                  <th style={{ width: 44 }}>
-                    <span className="sr">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {documents.map((d) => (
-                  <tr
-                    key={d.file}
-                    className={d.state === "duplicate" ? "dim" : undefined}
-                  >
-                    <td>
-                      <input
-                        type="checkbox"
-                        className="check"
-                        aria-label={`Select ${d.file}`}
-                      />
-                    </td>
-                    <td>
-                      <div className="strong">{d.file}</div>
-                      <div className="meta">{d.meta}</div>
-                    </td>
-                    {d.type ? (
-                      <>
-                        <td>
-                          <Badge>{d.type}</Badge>
-                        </td>
-                        <td
-                          className={
-                            d.organisation === "Not stated"
-                              ? "muted"
-                              : undefined
-                          }
-                        >
-                          {d.organisation}
-                        </td>
-                        <td className="num">{d.period}</td>
-                      </>
-                    ) : (
-                      <td colSpan={3}>{d.organisation}</td>
-                    )}
-                    <td>
-                      <DocumentStatus state={d.state} note={d.note} />
-                    </td>
-                    <td className="meta">{d.attempts}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className="icon-btn"
-                        aria-label={`Actions for ${d.file}`}
-                      >
-                        <Icon name="dots" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="foot">
-            <span>Example states · 0 of 7 rows selected</span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button type="button" className="btn btn-outline btn-sm" disabled>
-                Previous
-              </button>
-              <button type="button" className="btn btn-outline btn-sm">
-                Next
-              </button>
-            </div>
-          </div>
-        </section>
+        <DocumentsTable documents={documents} />
 
         <div className="grid-2">
           <section className="card pad" aria-label="Activity">
@@ -216,44 +102,4 @@ export default function DocumentsPage() {
       </main>
     </>
   );
-}
-
-function DocumentStatus({
-  state,
-  note,
-}: {
-  state: (typeof documents)[number]["state"];
-  note?: string;
-}) {
-  if (state === "extracting") {
-    return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 6,
-          minWidth: 170,
-        }}
-      >
-        <span className="status">
-          <Status state="extracting" label="Extracting" />
-          <span className="muted">{note}</span>
-        </span>
-        <div className="bar indet" role="progressbar" aria-label="Extracting">
-          <i />
-        </div>
-      </div>
-    );
-  }
-  if (state === "retrying") {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Status state="retrying" label="Retrying in 8 s" />
-        <span className="muted" style={{ fontSize: 12 }}>
-          {note}
-        </span>
-      </div>
-    );
-  }
-  return <Status state={state} />;
 }

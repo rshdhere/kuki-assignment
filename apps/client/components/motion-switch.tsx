@@ -24,7 +24,7 @@ function setPaused(paused: boolean) {
 }
 
 /**
- * Pauses every looping animation (spinners, countdowns, live pulses, stripes).
+ * Pauses every looping animation (spinners, countdowns, stripes).
  * Loops longer than 5 s need a pause control (WCAG 2.2.2). The OS
  * reduced-motion setting is handled separately in globals.css.
  */

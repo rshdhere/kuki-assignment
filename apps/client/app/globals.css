@@ -75,6 +75,27 @@ textarea {
   font: inherit;
   color: inherit;
 }
+/* Everything clickable gets a pointer; disabled controls don't. */
+a[href],
+button,
+summary,
+select,
+label[for],
+label:has(> input[type="checkbox"], > input[type="radio"]),
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"],
+[role="button"],
+[role="tab"],
+[role="option"],
+[role="switch"],
+[role="menuitem"] {
+  cursor: pointer;
+}
+:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
 h1,
 h2,
 h3,
@@ -515,6 +536,9 @@ body {
 }
 
 /* Main column */
+.sidebar-collapsed .side {
+  display: none;
+}
 .main {
   flex: 999 1 560px;
   min-width: 0;
@@ -704,18 +728,6 @@ body {
 .btn-dashed:hover {
   border-style: solid;
   background: var(--shelf);
-}
-.btn .nudge {
-  transition: transform var(--d2) var(--ease-out);
-}
-.btn:hover .nudge {
-  transform: translate(2px, -2px);
-}
-.btn:hover .lift-icon {
-  transform: translateY(-2px);
-}
-.lift-icon {
-  transition: transform var(--d2) var(--ease-out);
 }
 .icon-btn {
   width: 32px;
@@ -957,9 +969,6 @@ body {
   border-color: var(--emerald);
   background: #fbfdfc;
 }
-.drop:hover .drop-icon svg {
-  transform: translateY(-2px);
-}
 .drop-icon {
   width: 40px;
   height: 40px;
@@ -969,9 +978,6 @@ body {
   border: 1px solid var(--line);
   display: grid;
   place-items: center;
-}
-.drop-icon svg {
-  transition: transform var(--d2) var(--ease-out);
 }
 
 /* Tables */
@@ -1012,6 +1018,9 @@ body {
 }
 .tbl tbody tr:hover td {
   background: var(--shelf);
+}
+.tbl tbody tr.selected td {
+  background: var(--wash);
 }
 .tbl tr.dim td {
   color: var(--muted);
@@ -1143,17 +1152,8 @@ body {
 .live {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   font-size: 13px;
   color: var(--muted);
-}
-.live::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--ok);
-  animation: pulse 2s var(--ease-out) infinite;
 }
 .stripes {
   background: repeating-linear-gradient(
@@ -1224,12 +1224,9 @@ body {
 }
 .src .go {
   color: var(--muted);
-  transition:
-    transform var(--d2) var(--ease-out),
-    color var(--d1);
+  transition: color var(--d1);
 }
 .src:hover .go {
-  transform: translateX(2px);
   color: var(--ink);
 }
 .hl {
@@ -1403,17 +1400,6 @@ body {
   }
   to {
     stroke-dashoffset: 44;
-  }
-}
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.45);
-  }
-  70% {
-    box-shadow: 0 0 0 7px rgba(22, 163, 74, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
   }
 }
 @keyframes stripes {
@@ -1659,12 +1645,6 @@ body {
 }
 .send:hover {
   background: var(--emerald-2);
-}
-.send svg {
-  transition: transform var(--d2) var(--ease-out);
-}
-.send:hover svg {
-  transform: translateY(-1px);
 }
 .send:active {
   transform: scale(0.9);

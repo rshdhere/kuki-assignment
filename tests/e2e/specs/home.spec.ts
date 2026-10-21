@@ -51,3 +51,45 @@ test("picking a calculated fact explains there is nothing to highlight", async (
   await page.getByRole("button", { name: "Average per day" }).click();
   await expect(page.getByText('"Average per day" is calculated')).toBeVisible();
 });
+
+test("select all checks every row and updates the count", async ({ page }) => {
+  await page.goto("/");
+  const table = page.getByRole("region", { name: "Processing queue" });
+  const selectAll = table.getByRole("checkbox", { name: "Select all" });
+  const rows = table.getByRole("checkbox", { name: /^Select (?!all)/ });
+  const footer = table.getByText(/rows selected/);
+
+  await expect(rows).toHaveCount(7);
+  await expect(footer).toContainText("0 of 7");
+
+  await selectAll.check();
+  for (const row of await rows.all()) await expect(row).toBeChecked();
+  await expect(footer).toContainText("7 of 7");
+
+  // Unchecking one row leaves the header in the mixed state.
+  await rows.first().uncheck();
+  await expect(selectAll).not.toBeChecked();
+  expect(
+    await selectAll.evaluate((el: HTMLInputElement) => el.indeterminate),
+  ).toBe(true);
+  await expect(footer).toContainText("6 of 7");
+
+  // From the mixed state, the header selects everything again.
+  await selectAll.check();
+  await expect(footer).toContainText("7 of 7");
+
+  await selectAll.uncheck();
+  for (const row of await rows.all()) await expect(row).not.toBeChecked();
+  await expect(footer).toContainText("0 of 7");
+});
+
+test("checking every row checks select all", async ({ page }) => {
+  await page.goto("/");
+  const table = page.getByRole("region", { name: "Processing queue" });
+  const rows = table.getByRole("checkbox", { name: /^Select (?!all)/ });
+
+  for (const row of await rows.all()) await row.check();
+  await expect(
+    table.getByRole("checkbox", { name: "Select all" }),
+  ).toBeChecked();
+});
