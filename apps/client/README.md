@@ -18,7 +18,7 @@ All screens share `app/(dashboard)/layout.tsx`, which renders the sidebar.
 
 ```text
 app/
-├── layout.tsx              # fonts (Geist, Geist Mono) and metadata
+├── layout.tsx              # fonts (Inter, Instrument Serif, Geist Mono) and metadata
 ├── globals.css             # brand tokens, components, motion
 └── (dashboard)/            # one folder per screen
 components/

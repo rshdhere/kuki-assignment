@@ -36,8 +36,10 @@
   --calc-ink: #1d4ed8;
   --calc-soft: #eff6ff;
   --font:
-    var(--font-geist-sans), "Inter", system-ui, -apple-system, "Segoe UI",
-    sans-serif;
+    var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --serif:
+    var(--font-instrument-serif), "Instrument Serif", Georgia,
+    "Times New Roman", serif;
   --mono:
     var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
   --r-sm: 6px;
@@ -485,10 +487,11 @@ body {
 }
 .title {
   margin: 0;
-  font-size: 24px;
-  line-height: 1.25;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-family: var(--serif);
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   text-wrap: balance;
 }
 .lede {
