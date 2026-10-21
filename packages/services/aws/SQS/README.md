@@ -2,6 +2,36 @@
 
 `@kuki/sqs`: [Amazon SQS](https://aws.amazon.com/sqs/) client for message queues.
 
+## AWS resources
+
+Queues live in **Asia Pacific (Mumbai) `ap-south-1`**. Each environment has a main queue for document extraction jobs and a dead-letter queue (DLQ) for jobs that keep failing.
+
+| Environment | Main queue                      | Dead-letter queue                   |
+| ----------- | ------------------------------- | ----------------------------------- |
+| Dev         | `kuki-document-extraction-dev`  | `kuki-document-extraction-dev-dlq`  |
+| Prod        | `kuki-document-extraction-prod` | `kuki-document-extraction-prod-dlq` |
+
+| Setting            | Main queue                      | DLQ      |
+| ------------------ | ------------------------------- | -------- |
+| Type               | Standard                        | Standard |
+| Encryption         | SSE-SQS                         | SSE-SQS  |
+| Visibility timeout | 5 minutes                       | Default  |
+| Message retention  | 4 days                          | 14 days  |
+| Receive wait time  | 20 seconds (long polling)       | Default  |
+| Redrive            | To the DLQ after **3** receives | n/a      |
+
+```
+server ──send──▶ kuki-document-extraction-<env> ──receive──▶ worker
+                          │
+                 fails 3 times
+                          ▼
+                kuki-document-extraction-<env>-dlq   (inspect, fix, redrive)
+```
+
+After fixing the cause of a failure, use **Start DLQ redrive** on the DLQ in the SQS console to move the messages back to the main queue.
+
+![SQS console showing the dev and prod queues with their dead-letter queues](docs/queues.png)
+
 ## Usage
 
 ```ts

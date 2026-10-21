@@ -2,6 +2,19 @@
 
 `@kuki/s3`: [Amazon S3](https://aws.amazon.com/s3/) client for file storage.
 
+## AWS resources
+
+Buckets live in **Asia Pacific (Mumbai) `ap-south-1`**, one per environment.
+
+| Environment | Bucket                                    |
+| ----------- | ----------------------------------------- |
+| Dev         | `kuki-evidence-documents-dev-ap-south-1`  |
+| Prod        | `kuki-evidence-documents-prod-ap-south-1` |
+
+Split objects by prefix inside a bucket (e.g. `uploads/`, `extracted/`) rather than creating more buckets.
+
+![S3 console showing the dev and prod buckets in ap-south-1](docs/buckets.png)
+
 ## Usage
 
 ```ts
@@ -9,7 +22,11 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "@kuki/s3";
 
 await s3.send(
-  new PutObjectCommand({ Bucket: "my-bucket", Key: "file.pdf", Body: buffer }),
+  new PutObjectCommand({
+    Bucket: "kuki-evidence-documents-dev-ap-south-1",
+    Key: "file.pdf",
+    Body: buffer,
+  }),
 );
 ```
 

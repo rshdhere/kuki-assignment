@@ -19,6 +19,16 @@ Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1Tb
 - `tooling/eslint-config`: shared ESLint config (`@kuki/eslint-config`)
 - `tooling/typescript-config`: shared tsconfigs (`@kuki/typescript-config`)
 
+## AWS infrastructure
+
+### S3
+
+![S3 console showing the dev and prod buckets in ap-south-1](packages/services/aws/S3/docs/buckets.png)
+
+### SQS
+
+![SQS console showing the dev and prod queues with their dead-letter queues](packages/services/aws/SQS/docs/queues.png)
+
 ## Getting started
 
 ```sh
