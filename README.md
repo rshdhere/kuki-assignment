@@ -7,7 +7,7 @@ Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1Tb
 ## Structure
 
 - `apps/client`: Next.js frontend
-- `apps/server`: Bun + Hono backend (Swagger UI at `/docs`, spec at `/openapi.yaml`)
+- `apps/server`: Bun + Express backend (Swagger UI at `/docs`, spec at `/openapi.yaml`)
 - `packages/openapi`: hand-written OpenAPI spec (`openapi.yaml`, `@kuki/openapi`)
 - `packages/api`, `config`, `controllers`, `drizzle`, `handlers`, `types`, `validators`: server-side packages (`@kuki/<name>`)
 - `packages/services/aws/S3`: S3 client (`@kuki/s3`)

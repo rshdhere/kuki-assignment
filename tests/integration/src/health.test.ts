@@ -1,10 +1,10 @@
 import request from "supertest";
 import { describe, expect, it } from "vitest";
-import { createTestServer } from "@/server";
+import { app } from "server/app";
 
 describe("GET /health", () => {
   it("returns ok", async () => {
-    const res = await request(createTestServer()).get("/health");
+    const res = await request(app).get("/health");
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: "ok" });
@@ -13,7 +13,7 @@ describe("GET /health", () => {
 
 describe("GET /openapi.yaml", () => {
   it("serves the OpenAPI spec", async () => {
-    const res = await request(createTestServer()).get("/openapi.yaml");
+    const res = await request(app).get("/openapi.yaml");
 
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toContain("application/yaml");

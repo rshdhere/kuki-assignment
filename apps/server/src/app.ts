@@ -1,15 +1,21 @@
-import { readFile } from "node:fs/promises";
 import { openApiSpecPath } from "@kuki/openapi";
-import { swaggerUI } from "@hono/swagger-ui";
-import { Hono } from "hono";
+import express from "express";
+import swaggerUi from "swagger-ui-express";
 
-export const app = new Hono();
+export const app = express();
 
-app.get("/health", (c) => c.json({ status: "ok" }));
+app.use(express.json());
 
-app.get("/openapi.yaml", async (c) => {
-  const spec = await readFile(openApiSpecPath, "utf8");
-  return c.body(spec, 200, { "Content-Type": "application/yaml" });
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok" });
 });
 
-app.get("/docs", swaggerUI({ url: "/openapi.yaml" }));
+app.get("/openapi.yaml", (_req, res) => {
+  res.type("application/yaml").sendFile(openApiSpecPath);
+});
+
+app.use(
+  "/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(undefined, { swaggerOptions: { url: "/openapi.yaml" } }),
+);
