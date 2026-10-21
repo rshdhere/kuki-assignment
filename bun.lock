@@ -113,11 +113,24 @@
         "typescript": "7.0.2",
       },
     },
-    "packages/services/aws": {
-      "name": "@kuki/aws",
+    "packages/services/aws/S3": {
+      "name": "@kuki/s3",
       "version": "0.0.0",
       "dependencies": {
         "@aws-sdk/client-s3": "^3.1155.0",
+      },
+      "devDependencies": {
+        "@kuki/eslint-config": "workspace:*",
+        "@kuki/typescript-config": "workspace:*",
+        "@types/bun": "latest",
+        "eslint": "10.9.1",
+        "typescript": "7.0.2",
+      },
+    },
+    "packages/services/aws/SQS": {
+      "name": "@kuki/sqs",
+      "version": "0.0.0",
+      "dependencies": {
         "@aws-sdk/client-sqs": "^3.1155.0",
       },
       "devDependencies": {
@@ -428,8 +441,6 @@
 
     "@kuki/api": ["@kuki/api@workspace:packages/api"],
 
-    "@kuki/aws": ["@kuki/aws@workspace:packages/services/aws"],
-
     "@kuki/config": ["@kuki/config@workspace:packages/config"],
 
     "@kuki/controllers": ["@kuki/controllers@workspace:packages/controllers"],
@@ -447,6 +458,10 @@
     "@kuki/integration-tests": ["@kuki/integration-tests@workspace:tests/integration"],
 
     "@kuki/openapi": ["@kuki/openapi@workspace:packages/openapi"],
+
+    "@kuki/s3": ["@kuki/s3@workspace:packages/services/aws/S3"],
+
+    "@kuki/sqs": ["@kuki/sqs@workspace:packages/services/aws/SQS"],
 
     "@kuki/types": ["@kuki/types@workspace:packages/types"],
 

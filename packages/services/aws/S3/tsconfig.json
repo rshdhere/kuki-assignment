@@ -10,7 +10,7 @@
     "declaration": false,
     "declarationMap": false,
     "paths": {
-      "@kuki/aws/*": ["./src/*"]
+      "@kuki/s3/*": ["./src/*"]
     }
   },
   "include": ["src"],

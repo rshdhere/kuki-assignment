@@ -33,6 +33,7 @@
     "apps/*",
     "packages/*",
     "packages/services/*",
+    "packages/services/aws/*",
     "tooling/*",
     "tests/*"
   ]

@@ -1,5 +1,5 @@
 {
-  "name": "@kuki/aws",
+  "name": "@kuki/sqs",
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -19,7 +19,6 @@
     "typescript": "7.0.2"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1155.0",
     "@aws-sdk/client-sqs": "^3.1155.0"
   }
 }
