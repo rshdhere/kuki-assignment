@@ -2,6 +2,10 @@
 
 This Turborepo starter is maintained by the Turborepo core team.
 
+## Design
+
+The UI design lives in Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1TbMWEW/KuKi-Evidence-Dashboard?node-id=0-1&t=u0fQz3JjLMVKChmv-1)
+
 ## Using this example
 
 Run the following command:
