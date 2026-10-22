@@ -10,6 +10,8 @@ Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1Tb
 
 [Swagger UI](https://kuki-assignment.vercel.app/docs/)
 
+[![Swagger UI showing the KuKi Evidence API uploads and documents endpoints](docs/swagger-uploads-documents.png)](https://kuki-assignment.vercel.app/docs/)
+
 ## AWS infrastructure
 
 ### S3
