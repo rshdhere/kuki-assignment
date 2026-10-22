@@ -52,3 +52,6 @@ demo.md
 # API docs generated from workspace packages by the Next.js build
 apps/client/public/swagger-ui/
 apps/client/public/openapi.yaml
+
+# Staged for Vercel; source lives in docker/
+/Dockerfile.worker

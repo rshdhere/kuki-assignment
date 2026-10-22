@@ -60,7 +60,7 @@
   "daemons": {
     "extraction-worker": {
       "root": ".",
-      "entrypoint": "docker/Dockerfile.worker",
+      "entrypoint": "Dockerfile.worker",
       "instances": {
         "bom1": 1
       },

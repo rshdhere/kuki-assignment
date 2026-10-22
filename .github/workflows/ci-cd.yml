@@ -133,6 +133,8 @@ jobs:
           fi
       - name: Install Vercel CLI
         run: npm install --global "vercel@$VERCEL_CLI_VERSION"
+      - name: Prepare worker build context
+        run: bash scripts/prepare-worker-build.sh
       # Daemon images must be built on Vercel; local `vercel build` rejects them.
       - name: Build and deploy production on Vercel
         run: vercel deploy --prod --yes --token="$VERCEL_TOKEN"

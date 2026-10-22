@@ -22,6 +22,13 @@ Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1Tb
 
 ![SQS console showing the dev and prod queues with their dead-letter queues](packages/services/aws/SQS/docs/queues.png)
 
+## Worker deployment
+
+The worker Dockerfile lives in `docker/Dockerfile.worker`. Vercel uses the
+Dockerfile directory as its build context, so CI runs
+`bash scripts/prepare-worker-build.sh` before deployment to stage a copy at the
+repository root. Run the same command before a manual Vercel deployment.
+
 ## Scripts
 
 | Command               | Description                                             |
