@@ -8,30 +8,7 @@ Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1Tb
 
 ## API documentation
 
-Start the API with `bun run dev`, then open [Swagger UI](http://localhost:4000/docs)
-to explore request schemas, responses, and interactive examples. The server also
-serves the [raw OpenAPI YAML](http://localhost:4000/openapi.yaml); its source is
-[`packages/openapi/openapi.yaml`](packages/openapi/openapi.yaml).
-
-| Method | Endpoint                       | Description                                           |
-| ------ | ------------------------------ | ----------------------------------------------------- |
-| GET    | `/health`                      | API health check                                      |
-| POST   | `/uploads`                     | Create presigned S3 upload URLs and detect duplicates |
-| POST   | `/uploads/{uploadId}/complete` | Confirm an upload and queue extraction                |
-| GET    | `/documents`                   | List documents                                        |
-| GET    | `/documents/{id}`              | Get a document and its extracted facts                |
-| GET    | `/events`                      | Read the activity feed                                |
-| POST   | `/answers`                     | Ask a question about uploaded evidence                |
-| GET    | `/answers`                     | Retrieve earlier answers                              |
-| GET    | `/financial-year`              | Get financial-year totals and coverage                |
-| GET    | `/evaluations`                 | Retrieve saved evaluation runs                        |
-
-Locally, API endpoints use `http://localhost:4000`. With the included Vercel
-routing, endpoints use `/api` on the deployment's origin; Swagger UI remains at
-`/docs` and the spec at `/openapi.yaml`. The served spec selects `/api` when
-running on Vercel so Swagger requests reach the API service.
-
-![Swagger UI showing health, upload and document endpoints](docs/swagger-uploads-documents.png)
+[Swagger UI](https://kuki-assignment.vercel.app/docs/)
 
 ## AWS infrastructure
 
