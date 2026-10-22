@@ -10,10 +10,10 @@ to run rather than restored from Turborepo's cache. A separate job runs Chromium
 Playwright tests and retains failure traces for seven days. No production secrets
 are needed for these jobs, including pull requests from forks.
 
-## Enable production deployments
+## Production deployments
 
-The deploy job targets the existing root `vercel.json`. Finish and commit that
-deployment configuration and its supporting files before enabling CD. Verify that
+The deploy job runs after successful checks on every push to `main` and targets
+the root `vercel.json`. Verify that
 the linked Vercel project supports the configured services and worker daemon;
 this pipeline does not provision infrastructure or apply production DB migrations.
 
@@ -27,13 +27,12 @@ this pipeline does not provision infrastructure or apply production DB migration
    tested with this project's deployment configuration (`vercel --version`).
 4. Disable Vercel's automatic Git production deployments if Actions should own
    production releases, so pushes cannot deploy before these checks pass.
-5. Set repository variable `VERCEL_DEPLOY_ENABLED` to `true`.
 
 Successful checks on `main` then pull production settings, build using Vercel,
 and deploy that build with `--prebuilt`. Production deployments are serialized
-and are never canceled mid-deploy. A manual run on `main` also deploys when CD
-is enabled; manual runs on other branches only run checks. Until enabled, CI
-runs normally and the deploy job is skipped.
+and are never canceled mid-deploy. A manual run on `main` also deploys;
+manual runs on other branches only run checks. Missing deployment settings
+fail the deployment configuration check instead of silently skipping the job.
 
 Require both `Lint, types, build and tests` and `Playwright` in the `main` branch
 ruleset. Optional deployment approvals can be configured on the `production`

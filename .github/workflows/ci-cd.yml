@@ -98,8 +98,7 @@ jobs:
     needs: [checks, e2e]
     if: >-
       github.ref == 'refs/heads/main' &&
-      github.event_name != 'pull_request' &&
-      vars.VERCEL_DEPLOY_ENABLED == 'true'
+      github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
