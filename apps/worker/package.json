@@ -1,0 +1,30 @@
+{
+  "name": "worker",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "module": "src/index.ts",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "lint": "eslint --max-warnings 0",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@kuki/eslint-config": "workspace:*",
+    "@kuki/typescript-config": "workspace:*",
+    "@types/bun": "latest",
+    "eslint": "10.9.1",
+    "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "@kuki/config": "workspace:*",
+    "@kuki/drizzle": "workspace:*",
+    "@kuki/handlers": "workspace:*",
+    "@kuki/sqs": "workspace:*",
+    "@kuki/types": "workspace:*"
+  },
+  "exports": {
+    "./consumer": "./src/consumer.ts"
+  }
+}

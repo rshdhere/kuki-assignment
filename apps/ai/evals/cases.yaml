@@ -1,0 +1,311 @@
+# Eval cases over the six assignment documents (put them in data/documents/).
+#
+# Each case gives the question, the documents in scope, and what a correct
+# answer must contain. `expect` keys (all optional):
+#   status       allowed answer statuses
+#   values       numbers that must appear among the answer's key values or text
+#                ({value, tolerance?}); tolerance is absolute, default 0.5% of value
+#   primary      the first key value must be this number (the figure being asked for)
+#   forbidden    numbers that must not be presented as key values ({value, unit?})
+#   mentions     groups of alternatives; each group needs one match in the answer
+#   sources      locations that verified evidence must cite ({document, page} or
+#                {document, sheet, cell_range})
+#   calculation  a checked calculation must produce one of these values
+#   gaps         true if the answer must state gaps/limits
+#
+# Expected values were read by hand from the documents; `source` says where.
+
+- id: E01
+  title: Adani consumption and billing period
+  question: "What electricity consumption does the Adani bill report, and for which billing period?"
+  documents: [Adani commercial electricity bill.pdf]
+  source: 'Adani p.1, "Units Consumed 47407", "Bill Period 01-04-2024 - 30.04.2024"; p.2 consumption table also states "Consumption (kWh) 47407" ((4132.27 - 3539.68) x MF 80)'
+  expect:
+    status: [answered]
+    values: [{ value: 47407 }]
+    primary: 47407
+    mentions:
+      - [
+          "2024-04-01",
+          "01-04-2024",
+          "1 April 2024",
+          "01.04.2024",
+          "April 1, 2024",
+          "1 Apr 2024",
+        ]
+      - [
+          "2024-04-30",
+          "30-04-2024",
+          "30 April 2024",
+          "30.04.2024",
+          "April 30, 2024",
+          "30 Apr 2024",
+        ]
+    sources: [{ document: Adani commercial electricity bill.pdf, page: [1, 2] }]
+
+- id: E02
+  title: BESCOM consumption in kWh, not kVAh
+  question: "What electricity consumption does the BESCOM bill report in kWh, and for which period?"
+  documents: [BESCOM Commercial Electricity Bill.pdf]
+  source: "BESCOM p.1, kWh consumption 63000 (the kVAh figure is 63359.86); period 01-06-2024 to 01-07-2024"
+  expect:
+    status: [answered]
+    values: [{ value: 63000 }]
+    primary: 63000
+    forbidden: [{ value: 63359.86, unit: kWh }]
+    mentions:
+      - [
+          "2024-06-01",
+          "01-06-2024",
+          "1 June 2024",
+          "01.06.2024",
+          "June 1, 2024",
+          "1 Jun 2024",
+        ]
+      - [
+          "2024-07-01",
+          "01-07-2024",
+          "1 July 2024",
+          "01.07.2024",
+          "July 1, 2024",
+          "1 Jul 2024",
+        ]
+    sources: [{ document: BESCOM Commercial Electricity Bill.pdf, page: 1 }]
+
+- id: E03
+  title: Adani amount payable by the due date
+  question: "How much has to be paid on the Adani bill by its due date?"
+  documents: [Adani commercial electricity bill.pdf]
+  source: 'Adani p.1, "₹ 631510.00* Due Date: 30-05-2024" (626420.00 is the discount amount, 639410.00 after due date, 632023.17 current month bill)'
+  expect:
+    status: [answered]
+    values: [{ value: 631510 }]
+    primary: 631510
+    mentions:
+      [
+        [
+          "30-05-2024",
+          "2024-05-30",
+          "30 May 2024",
+          "30.05.2024",
+          "May 30, 2024",
+        ],
+      ]
+    sources: [{ document: Adani commercial electricity bill.pdf, page: 1 }]
+
+- id: E04
+  title: BESCOM net amount payable
+  question: "What is the net amount payable on the BESCOM bill?"
+  documents: [BESCOM Commercial Electricity Bill.pdf]
+  source: "BESCOM p.1, net amount payable 808528.00"
+  expect:
+    status: [answered]
+    values: [{ value: 808528 }]
+    primary: 808528
+    sources: [{ document: BESCOM Commercial Electricity Bill.pdf, page: 1 }]
+
+- id: E05
+  title: Water consumption vs meter readings
+  question: "Does the water consumption match the meter readings?"
+  documents: [water_bill_invoice.pdf]
+  source: "Water p.1, current reading 14821, previous 12500, consumption 2321"
+  expect:
+    status: [answered]
+    values: [{ value: 14821 }, { value: 12500 }, { value: 2321 }]
+    calculation: [2321]
+    sources: [{ document: water_bill_invoice.pdf, page: 1 }]
+
+- id: E06
+  title: Water bill total due and GST
+  question: "What is the total amount due on the water bill, and how much of it is GST?"
+  documents: [water_bill_invoice.pdf]
+  source: 'Water p.2, "TOTAL AMOUNT DUE: ₹158,733.62" and "Tax (5% GST): ₹7,558.74" on a subtotal of ₹151,174.88'
+  expect:
+    status: [answered]
+    values: [{ value: 158733.62 }, { value: 7558.74 }]
+    primary: 158733.62
+    sources: [{ document: water_bill_invoice.pdf, page: 2 }]
+
+- id: E07
+  title: Total waste quantity
+  question: "What total waste quantity is recorded?"
+  documents: [form 3 filled.docx.pdf]
+  source: "Form 3 p.1, entries 1.0 + 0.5 + 0.5 + 0.4 MT dated 10.03.2023"
+  expect:
+    status: [answered, partial]
+    values: [{ value: 2.4, tolerance: 0.001 }]
+    calculation: [2.4]
+    mentions: [["MT", "tonne", "metric ton"]]
+    sources: [{ document: form 3 filled.docx.pdf, page: 1 }]
+
+- id: E08
+  title: Form 3 date inconsistency
+  question: "Are the dates on the waste record (Form 3) consistent with each other?"
+  documents: [form 3 filled.docx.pdf]
+  source: 'Form 3 p.2 "Date: 08.03.2022" next to the occupier''s signature, while every entry on p.1 is dated 10.03.2023'
+  expect:
+    status: [conflicting_evidence, answered, partial]
+    sources:
+      - { document: form 3 filled.docx.pdf, page: 1 }
+      - { document: form 3 filled.docx.pdf, page: 2 }
+    mentions:
+      - [
+          "08.03.2022",
+          "2022-03-08",
+          "8 March 2022",
+          "08-03-2022",
+          "March 8, 2022",
+        ]
+      - [
+          "10.03.2023",
+          "2023-03-10",
+          "10 March 2023",
+          "10-03-2023",
+          "March 10, 2023",
+        ]
+      - [
+          "inconsisten",
+          "not consistent",
+          "mismatch",
+          "precede",
+          "before the",
+          "earlier than",
+          "do not match",
+          "don't match",
+        ]
+    gaps: true
+
+- id: E09
+  title: Workbook monthly values vs annual summaries
+  question: "Do the workbook's monthly values and annual summaries agree?"
+  documents: [Annual Electricity Consumption.xlsx]
+  source: 'Monthly Summary 2026 F3:F14 sums to 2426123; F16 "ANNUAL TOTAL" 2425123; Quarterly Summary G7 2427123'
+  expect:
+    status: [conflicting_evidence]
+    values: [{ value: 2426123 }, { value: 2425123 }, { value: 2427123 }]
+    calculation: [2426123]
+    sources:
+      - {
+          document: Annual Electricity Consumption.xlsx,
+          sheet: Monthly Summary 2026,
+          cell_range: F16,
+        }
+      - {
+          document: Annual Electricity Consumption.xlsx,
+          sheet: Quarterly Summary,
+          cell_range: G7,
+        }
+    gaps: true
+
+- id: E10
+  title: Complaint resolution deadline absent from policy
+  question: "Does the quality policy specify a deadline for resolving customer complaints?"
+  documents: [quality_policy_nestle.pdf]
+  source: "quality_policy_nestle.pdf, all pages; no time limit for complaints is stated"
+  expect:
+    status: [insufficient_evidence, answered]
+    mentions:
+      [
+        [
+          "not specif",
+          "does not specify",
+          "doesn't specify",
+          "no deadline",
+          "no specific",
+          "not state",
+          "does not state",
+          "no time limit",
+          "not mention",
+          "does not mention",
+          "no explicit",
+        ],
+      ]
+    gaps: true
+
+- id: E11
+  title: FY 2026-27 electricity total and coverage
+  question: "What was the total electricity consumption in FY 2026-27?"
+  documents: [Annual Electricity Consumption.xlsx]
+  source: "Monthly Summary 2026 F6:F14 (Apr-Dec 2026) = 1841800; Jan-Mar 2027 not covered"
+  expect:
+    status: [partial, answered]
+    values: [{ value: 1841800 }]
+    primary: 1841800
+    mentions:
+      - [
+          "9 of 12",
+          "nine months",
+          "9 months",
+          "April to December",
+          "Apr to Dec",
+          "Apr–Dec",
+          "Apr-Dec",
+          "April–December",
+          "April-December",
+        ]
+      - ["January", "Jan", "March 2027", "Mar 2027", "missing", "not covered"]
+    sources:
+      [
+        {
+          document: Annual Electricity Consumption.xlsx,
+          sheet: Monthly Summary 2026,
+        },
+      ]
+    gaps: true
+
+- id: E12
+  title: FY 2024-25 electricity across two organisations
+  question: "What was the total electricity consumption in FY 2024-25?"
+  documents:
+    - Annual Electricity Consumption.xlsx
+    - Adani commercial electricity bill.pdf
+    - BESCOM Commercial Electricity Bill.pdf
+    - water_bill_invoice.pdf
+    - form 3 filled.docx.pdf
+    - quality_policy_nestle.pdf
+  source: "Adani p.1 47407 kWh (Apr 2024, J Kumar MEPL JV); BESCOM p.1 63000 kWh (Jun 2024, a different organisation); the workbook covers 2026"
+  expect:
+    status: [partial, conflicting_evidence, answered]
+    values: [{ value: 47407 }, { value: 63000 }]
+    forbidden: [{ value: 110407 }]
+    mentions:
+      [
+        [
+          "different organisation",
+          "two organisations",
+          "separate organisation",
+          "different customers",
+          "different entities",
+          "not combined",
+          "not be combined",
+          "separately",
+        ],
+      ]
+    sources:
+      - { document: Adani commercial electricity bill.pdf, page: [1, 2] }
+      - { document: BESCOM Commercial Electricity Bill.pdf, page: 1 }
+    gaps: true
+
+- id: E13
+  title: Water consumption in FY 2025-26
+  question: "How much water was consumed in FY 2025-26, and how complete is that figure?"
+  documents: [water_bill_invoice.pdf]
+  source: "Water p.1, 2321 consumed in the Dec 2025 billing period; the rest of the year has no bill"
+  expect:
+    status: [partial, answered]
+    values: [{ value: 2321 }]
+    mentions:
+      [
+        [
+          "only",
+          "one bill",
+          "single bill",
+          "1 of 12",
+          "one month",
+          "incomplete",
+          "partial",
+          "missing",
+        ],
+      ]
+    sources: [{ document: water_bill_invoice.pdf, page: 1 }]
+    gaps: true

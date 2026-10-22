@@ -1,0 +1,12 @@
+{
+  "name": "ai",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "uv run uvicorn kuki_ai.app:app --reload --port 8000",
+    "start": "uv run uvicorn kuki_ai.app:app --port 8000",
+    "lint": "uv run ruff check . && uv run ruff format --check .",
+    "test": "uv run pytest -q",
+    "eval": "uv run kuki-eval"
+  }
+}

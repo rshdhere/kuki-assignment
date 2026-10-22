@@ -1,0 +1,193 @@
+{
+  "before": "baseline",
+  "after": "improved",
+  "summary": {
+    "baseline": {
+      "cases": 13,
+      "pass": 10,
+      "partial": 3,
+      "fail": 0,
+      "error": 0,
+      "score": 0.885,
+      "checks": {
+        "answer": {
+          "passed": 13,
+          "applicable": 13,
+          "rate": 1.0
+        },
+        "evidence": {
+          "passed": 10,
+          "applicable": 13,
+          "rate": 0.769
+        },
+        "calculation": {
+          "passed": 3,
+          "applicable": 3,
+          "rate": 1.0
+        },
+        "uncertainty": {
+          "passed": 6,
+          "applicable": 6,
+          "rate": 1.0
+        }
+      }
+    },
+    "improved": {
+      "cases": 13,
+      "pass": 13,
+      "partial": 0,
+      "fail": 0,
+      "error": 0,
+      "score": 1.0,
+      "checks": {
+        "answer": {
+          "passed": 13,
+          "applicable": 13,
+          "rate": 1.0
+        },
+        "evidence": {
+          "passed": 13,
+          "applicable": 13,
+          "rate": 1.0
+        },
+        "calculation": {
+          "passed": 3,
+          "applicable": 3,
+          "rate": 1.0
+        },
+        "uncertainty": {
+          "passed": 6,
+          "applicable": 6,
+          "rate": 1.0
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "E01",
+      "title": "Adani consumption and billing period",
+      "baseline": "pass",
+      "improved": "pass",
+      "change": null,
+      "baseline_notes": [],
+      "improved_notes": []
+    },
+    {
+      "id": "E02",
+      "title": "BESCOM consumption in kWh, not kVAh",
+      "baseline": "pass",
+      "improved": "pass",
+      "change": null,
+      "baseline_notes": [],
+      "improved_notes": []
+    },
+    {
+      "id": "E03",
+      "title": "Adani amount payable by the due date",
+      "baseline": "pass",
+      "improved": "pass",
+      "change": null,
+      "baseline_notes": [],
+      "improved_notes": []
+    },
+    {
+      "id": "E04",
+      "title": "BESCOM net amount payable",
+      "baseline": "pass",
+      "improved": "pass",
+      "change": null,
+      "baseline_notes": [],
+      "improved_notes": []
+    },
+    {
+      "id": "E05",
+      "title": "Water consumption vs meter readings",
+      "baseline": "pass",
+      "improved": "pass",
+      "change": null,
+      "baseline_notes": [],
+      "improved_notes": []
+    },
+    {
+      "id": "E06",
+      "title": "Water bill total due and GST",
+      "baseline": "pass",
+      "improved": "pass",
+      "change": null,
+      "baseline_notes": [],
+      "improved_notes": []
+    },
+    {
+      "id": "E07",
+      "title": "Total waste quantity",
+      "baseline": "pass",
+      "improved": "pass",
+      "change": null,
+      "baseline_notes": [],
+      "improved_notes": []
+    },
+    {
+      "id": "E08",
+      "title": "Form 3 date inconsistency",
+      "baseline": "pass",
+      "improved": "pass",
+      "change": null,
+      "baseline_notes": [],
+      "improved_notes": []
+    },
+    {
+      "id": "E09",
+      "title": "Workbook monthly values vs annual summaries",
+      "baseline": "partial",
+      "improved": "pass",
+      "change": "fixed",
+      "baseline_notes": [
+        "no verified evidence at Annual Electricity Consumption.xlsx Monthly Summary 2026!F16, Annual Electricity Consumption.xlsx Quarterly Summary!G7",
+        "only 0/4 evidence quotes verified"
+      ],
+      "improved_notes": []
+    },
+    {
+      "id": "E10",
+      "title": "Complaint resolution deadline absent from policy",
+      "baseline": "partial",
+      "improved": "pass",
+      "change": "fixed",
+      "baseline_notes": [
+        "only 1/2 evidence quotes verified"
+      ],
+      "improved_notes": []
+    },
+    {
+      "id": "E11",
+      "title": "FY 2026-27 electricity total and coverage",
+      "baseline": "partial",
+      "improved": "pass",
+      "change": "fixed",
+      "baseline_notes": [
+        "no verified evidence at Annual Electricity Consumption.xlsx Monthly Summary 2026!",
+        "only 0/2 evidence quotes verified"
+      ],
+      "improved_notes": []
+    },
+    {
+      "id": "E12",
+      "title": "FY 2024-25 electricity across two organisations",
+      "baseline": "pass",
+      "improved": "pass",
+      "change": null,
+      "baseline_notes": [],
+      "improved_notes": []
+    },
+    {
+      "id": "E13",
+      "title": "Water consumption in FY 2025-26",
+      "baseline": "pass",
+      "improved": "pass",
+      "change": null,
+      "baseline_notes": [],
+      "improved_notes": []
+    }
+  ]
+}
