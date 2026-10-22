@@ -66,6 +66,10 @@ Questions that mention a financial year get a hint to call the tool, so the mode
 
 ## Evals
 
+For native Harbor tasks and the KuKi pipeline adapter, see
+[Harbor evaluations](evals/harbor/README.md). The exporter uses the same 13 cases
+and scoring rules; historical baseline and improved runs remain available below.
+
 `evals/cases.yaml` holds 13 cases over the six documents. They cover bill consumption and periods, picking the right amount on a bill, kWh vs kVAh, meter-reading arithmetic, waste totals, an internal date inconsistency, workbook totals that disagree, a policy that doesn't state something, and FY coverage within one organisation and across two. Each case has the question, the documents in scope, the expected values, where in the documents they come from, and machine-checkable expectations.
 
 `kuki-eval` runs the real pipeline end to end on the files in `data/documents/`: parse, extract, answer, score. Extractions are cached per pipeline and file hash. Four checks are scored per case (`evals/scoring.py`):
