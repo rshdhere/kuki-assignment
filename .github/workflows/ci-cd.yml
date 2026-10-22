@@ -133,9 +133,6 @@ jobs:
           fi
       - name: Install Vercel CLI
         run: npm install --global "vercel@$VERCEL_CLI_VERSION"
-      - name: Pull production settings
-        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-      - name: Build production artifact
-        run: vercel build --prod --token="$VERCEL_TOKEN"
-      - name: Deploy production artifact
-        run: vercel deploy --prebuilt --prod --yes --token="$VERCEL_TOKEN"
+      # Daemon images must be built on Vercel; local `vercel build` rejects them.
+      - name: Build and deploy production on Vercel
+        run: vercel deploy --prod --yes --token="$VERCEL_TOKEN"

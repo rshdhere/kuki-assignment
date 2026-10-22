@@ -28,8 +28,11 @@ this pipeline does not provision infrastructure or apply production DB migration
 4. Disable Vercel's automatic Git production deployments if Actions should own
    production releases, so pushes cannot deploy before these checks pass.
 
-Successful checks on `main` then pull production settings, build using Vercel,
-and deploy that build with `--prebuilt`. Production deployments are serialized
+Successful checks on `main` then upload the source with `vercel deploy --prod`
+and wait for Vercel to build and deploy the services and worker daemon. The worker
+requires a remote build: local `vercel build` does not support daemons, so this
+workflow does not use `--prebuilt`. Sensitive production environment variables
+stay on Vercel rather than being pulled into the runner. Production deployments are serialized
 and are never canceled mid-deploy. A manual run on `main` also deploys;
 manual runs on other branches only run checks. Missing deployment settings
 fail the deployment configuration check instead of silently skipping the job.
