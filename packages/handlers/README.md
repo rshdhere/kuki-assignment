@@ -2,8 +2,6 @@
 
 `@kuki/handlers`: business logic: the use cases the server performs, independent of HTTP.
 
-> Scaffolded with `bun init`. `src/index.ts` is still empty.
-
 ## What goes here
 
 - Functions like `createEvidence(input)` that coordinate `@kuki/drizzle` queries and services (`@kuki/s3`, `@kuki/sqs`, `@kuki/email`)

@@ -1,7 +1,6 @@
 import { app } from "@/app";
+import { config } from "@kuki/config";
 
-const port = Number(process.env.PORT ?? 4000);
-
-app.listen(port, () => {
-  console.log(`Server listening on http://localhost:${port}`);
+app.listen(config.port, () => {
+  console.log(`Server listening on http://localhost:${config.port}`);
 });

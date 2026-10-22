@@ -15,7 +15,12 @@
     "@kuki/eslint-config": "workspace:*",
     "@kuki/typescript-config": "workspace:*",
     "@types/bun": "latest",
+    "@types/express": "^5.0.6",
     "eslint": "10.9.1",
     "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "@kuki/config": "workspace:*",
+    "zod": "^4.6.7"
   }
 }

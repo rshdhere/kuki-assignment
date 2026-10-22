@@ -10,14 +10,24 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1155.0",
+    "@aws-sdk/client-sqs": "^3.1155.0",
+    "@kuki/ai": "workspace:*",
+    "@kuki/drizzle": "workspace:*",
     "@kuki/eslint-config": "workspace:*",
+    "@kuki/handlers": "workspace:*",
+    "@kuki/types": "workspace:*",
     "@kuki/typescript-config": "workspace:*",
     "@types/node": "^26.6.5",
     "@types/supertest": "^7.2.1",
+    "aws-sdk-client-mock": "^4.1.0",
+    "drizzle-orm": "^0.45.4",
     "eslint": "10.9.1",
+    "postgres": "^3.4.9",
     "server": "workspace:*",
     "supertest": "^7.3.1",
     "typescript": "7.0.2",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "worker": "workspace:*"
   }
 }

@@ -6,6 +6,13 @@ import { Icon } from "@/components/icon";
 const STORAGE_KEY = "kuki:sidebar-collapsed";
 const EVENT = "kuki:sidebar";
 const CLASS = "sidebar-collapsed";
+/** On narrow screens the sidebar is a drawer, open while <html> has this class. */
+const OPEN_CLASS = "sidebar-open";
+const MOBILE = "(max-width: 900px)";
+
+export function closeMobileSidebar() {
+  document.documentElement.classList.remove(OPEN_CLASS);
+}
 
 // The collapsed state lives on <html class="sidebar-collapsed">, so CSS can hide the sidebar.
 const subscribe = (onChange: () => void) => {
@@ -58,8 +65,12 @@ export function SidebarToggle() {
       aria-controls="sidebar"
       aria-expanded={!collapsed}
       aria-keyshortcuts="Meta+B Control+B"
-      title={collapsed ? "Show sidebar" : "Hide sidebar"}
-      onClick={() => setCollapsed(!collapsed)}
+      title="Menu"
+      onClick={() => {
+        if (window.matchMedia(MOBILE).matches)
+          document.documentElement.classList.toggle(OPEN_CLASS);
+        else setCollapsed(!collapsed);
+      }}
     >
       <Icon name="panel" />
     </button>

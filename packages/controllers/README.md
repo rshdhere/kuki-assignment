@@ -2,8 +2,6 @@
 
 `@kuki/controllers`: Express request handlers: the HTTP layer between routes and business logic.
 
-> Scaffolded with `bun init`. `src/index.ts` is still empty.
-
 ## What goes here
 
 - Functions with the `(req, res, next)` signature used by routers in `@kuki/api`

@@ -2,101 +2,63 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { CommandPalette } from "@/components/command-palette";
 import { Icon } from "@/components/icon";
-import { MotionSwitch } from "@/components/motion-switch";
+import { closeMobileSidebar } from "@/components/sidebar-toggle";
 import { nav } from "@/lib/nav";
-
-const recent: Record<string, { title: string; items: string[] }> = {
-  "/ask": {
-    title: "Earlier questions",
-    items: [
-      "Workbook monthly vs annual",
-      "Water usage vs meter readings",
-      "Total waste recorded",
-      "Complaint resolution deadline",
-    ],
-  },
-  "/evaluation": {
-    title: "Runs",
-    items: ["r_02 · improved", "r_01 · baseline"],
-  },
-};
-
-const recentDocuments = {
-  title: "Recent",
-  items: [
-    "Adani commercial electricity bill",
-    "BESCOM Commercial Electricity Bill",
-    "Annual Electricity Consumption",
-  ],
-};
 
 export function Sidebar() {
   const pathname = usePathname();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
-  const list =
-    recent[pathname] ??
-    (pathname === "/financial-year" ? null : recentDocuments);
+
+  // On phones the sidebar is a drawer; close it after navigating.
+  useEffect(() => closeMobileSidebar(), [pathname]);
 
   return (
-    <aside id="sidebar" className="side" aria-label="Sidebar">
-      <button type="button" className="ws">
-        <span className="logo">
-          <span>K</span>
-        </span>
-        <span className="ws-name">
-          <b>KuKi</b>
-          <span>Sustainability data</span>
-        </span>
-        <Icon name="chevrons" />
-      </button>
+    <>
+      <aside id="sidebar" className="side" aria-label="Sidebar">
+        <Link href="/" className="ws">
+          <span className="logo">
+            <span>K</span>
+          </span>
+          <span className="ws-name">
+            <b>KuKi</b>
+            <span>Sustainability data</span>
+          </span>
+        </Link>
 
-      <CommandPalette />
+        <CommandPalette />
 
-      <nav className="nav" aria-label="Workspace">
-        <div className="nav-label">Workspace</div>
-        {nav.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="nav-item"
-            aria-current={isActive(item.href) ? "page" : undefined}
-          >
-            <Icon name={item.icon} />
-            {item.label}
-            {item.count && <span className="count">{item.count}</span>}
-          </Link>
-        ))}
-      </nav>
-
-      {list && (
-        <nav className="nav" aria-label={list.title}>
-          <div className="nav-label">{list.title}</div>
-          {list.items.map((item, i) => (
-            <a
-              key={item}
-              href="#"
-              className="recent"
-              aria-current={i === 0 && pathname !== "/" ? "page" : undefined}
+        <nav className="nav" aria-label="Workspace">
+          {nav.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="nav-item"
+              aria-current={isActive(item.href) ? "page" : undefined}
             >
-              {item}
-            </a>
+              <Icon name={item.icon} />
+              {item.label}
+            </Link>
           ))}
         </nav>
-      )}
 
-      <div className="side-foot">
-        <MotionSwitch />
-        <div className="who">
-          <span className="avatar">DU</span>
-          <span className="who-name">
-            <b>Demo user</b>
-            <span>Private workspace</span>
-          </span>
+        <div className="side-foot">
+          <p className="side-note">
+            KuKi reads your bills, spreadsheets and records, and keeps every
+            number linked to the page it came from.
+          </p>
         </div>
-      </div>
-    </aside>
+      </aside>
+      <button
+        type="button"
+        className="side-backdrop"
+        aria-label="Close menu"
+        tabIndex={-1}
+        onClick={closeMobileSidebar}
+      />
+    </>
   );
 }

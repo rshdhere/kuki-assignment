@@ -15,14 +15,30 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "env": ["AWS_*", "RESEND_API_KEY"]
+      "env": [
+        "AWS_*",
+        "CLIENT_ORIGIN",
+        "DATABASE_URL",
+        "RESEND_API_KEY",
+        "TEST_DATABASE_URL"
+      ]
     },
     "test:e2e": {
       "env": ["CI", "E2E_PORT"],
       "cache": false
     },
     "dev": {
-      "env": ["PORT", "AWS_*", "RESEND_API_KEY"],
+      "env": [
+        "AI_SERVICE_URL",
+        "AI_TIMEOUT_MS",
+        "AWS_*",
+        "CLIENT_ORIGIN",
+        "DATABASE_URL",
+        "OPENAI_*",
+        "PORT",
+        "RESEND_API_KEY",
+        "WORKER_CONCURRENCY"
+      ],
       "cache": false,
       "persistent": true
     }

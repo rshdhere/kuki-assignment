@@ -36,3 +36,13 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Dataset
+kuki-assignment-dataset.zip
+
+# Assignment documents (local only)
+data/documents/*
+!data/documents/README.md
+
+# Personal demo notes
+demo.md

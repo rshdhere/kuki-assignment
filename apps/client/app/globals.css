@@ -112,7 +112,6 @@ body {
 }
 .app {
   display: flex;
-  flex-wrap: wrap;
   min-height: 100vh;
   background: var(--page);
   color: var(--ink);
@@ -143,9 +142,12 @@ body {
 
 /* Sidebar */
 .side {
-  flex: 1 1 240px;
-  max-width: 256px;
-  min-width: 0;
+  flex: 0 0 248px;
+  width: 248px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
   background: var(--forest);
   color: var(--side-text);
   padding: 12px;
@@ -154,6 +156,7 @@ body {
   gap: 16px;
 }
 .ws {
+  text-decoration: none;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -404,43 +407,23 @@ body {
   color: #ffffff;
   font-weight: 500;
 }
-.nav-item .count {
-  margin-left: auto;
-  font: 500 12px var(--mono);
-  color: var(--side-muted);
-}
-.recent {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: var(--r-sm);
-  text-decoration: none;
-  color: var(--side-text);
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition:
-    background-color var(--d1) var(--ease-out),
-    color var(--d1);
-}
-.recent:hover {
-  background: var(--forest-2);
-  color: #ffffff;
-}
-.recent[aria-current] {
-  color: #ffffff;
-  font-weight: 500;
-}
-.side .recent .muted {
-  color: var(--side-muted);
-}
 .side-foot {
   margin-top: auto;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.side-note {
+  padding: 12px;
+  border-radius: var(--r-md);
+  background: var(--forest-2);
+  color: var(--side-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+/* Only shown behind the drawer on narrow screens. */
+.side-backdrop {
+  display: none;
 }
 .pref {
   display: flex;
@@ -540,19 +523,22 @@ body {
   display: none;
 }
 .main {
-  flex: 999 1 560px;
+  flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
 }
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   background: var(--paper);
   min-height: 56px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  padding: 10px 24px;
+  padding: 10px 32px;
   border-bottom: 1px solid var(--line);
 }
 .vsep {
@@ -585,12 +571,13 @@ body {
   gap: 8px;
 }
 .page {
-  padding: 24px;
+  padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   max-width: 1200px;
   width: 100%;
+  margin: 0 auto;
 }
 .page > * {
   animation: rise var(--d3) var(--ease-out) both;
@@ -965,7 +952,8 @@ body {
     border-color var(--d2) var(--ease-out),
     background-color var(--d2) var(--ease-out);
 }
-.drop:hover {
+.drop:hover,
+.drop.over {
   border-color: var(--emerald);
   background: #fbfdfc;
 }
@@ -1650,6 +1638,11 @@ body {
   transform: scale(0.9);
 }
 .earlier {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  width: calc(100% + 16px);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1759,4 +1752,218 @@ body {
   margin: 0;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Page structure ─────────────────────────────────────────────────────────
+   Every screen: heading row → summary → content, on one centred column.
+   Two-column screens use a fixed side panel that stays in view. */
+.page {
+  margin-inline: auto;
+}
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+.split > * {
+  min-width: 0;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.sticky {
+  position: sticky;
+  top: 24px;
+}
+@media (max-width: 1100px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sticky {
+    position: static;
+  }
+}
+.section-h {
+  font: 600 15px/1.3 var(--font);
+  color: var(--ink);
+}
+.section-d {
+  font-size: 13px;
+  color: var(--muted);
+}
+.ws {
+  text-decoration: none;
+}
+
+/* Tables with long text: columns keep their width and text wraps inside. */
+.tbl-fixed {
+  table-layout: fixed;
+}
+.tbl-fixed td {
+  overflow-wrap: anywhere;
+}
+.tbl .loc {
+  font: 12px var(--mono);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+/* The highlighter, inline in running text. */
+.hl-inline {
+  padding: 1px 2px;
+  border-radius: 3px;
+  color: var(--ink);
+  background: var(--mark);
+}
+.source-text {
+  margin: 0;
+  max-height: 360px;
+  overflow: auto;
+  padding: 12px;
+  background: var(--shelf);
+  border: 1px solid var(--wash);
+  border-radius: var(--r-sm);
+  font: 12px/1.7 var(--mono);
+  color: var(--text-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* A list of plain rows inside a card: documents, earlier questions. */
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+.rows > * {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background-color var(--d1) var(--ease-out);
+}
+.rows > *:hover,
+.rows > [aria-current="true"] {
+  background: var(--shelf);
+}
+.rows > *:focus-visible {
+  outline: 2px solid var(--ink);
+}
+.rows .row-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.rows .row-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Three plain steps, shown before anything is uploaded. */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 760px) {
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.step-n {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--wash);
+  font: 600 12px var(--font);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  all: unset;
+  box-sizing: border-box;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background-color var(--d1) var(--ease-out),
+    border-color var(--d1) var(--ease-out);
+}
+.chip:hover {
+  background: var(--shelf);
+  border-color: var(--line-2);
+}
+.chip:focus-visible {
+  outline: 2px solid var(--ink);
+}
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+}
+.check-row label {
+  overflow-wrap: anywhere;
+}
+
+/* Shell on narrow screens: the sidebar becomes a drawer opened from the top bar. */
+@media (max-width: 900px) {
+  .page {
+    padding: 20px 16px;
+    gap: 20px;
+  }
+  .topbar {
+    padding: 10px 16px;
+  }
+  .side {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform var(--d3) var(--ease-out);
+    box-shadow: var(--shadow-3);
+  }
+  .sidebar-collapsed .side {
+    display: flex;
+  }
+  .sidebar-open .side {
+    transform: none;
+  }
+  .sidebar-open .side-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    border: 0;
+    background: rgba(16, 36, 28, 0.4);
+  }
+}
+
+/* Summary cards sit two by two on phones instead of one long column. */
+@media (max-width: 560px) {
+  .grid-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .grid-stats .stat {
+    font-size: 24px;
+  }
 }

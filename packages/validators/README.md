@@ -2,8 +2,6 @@
 
 `@kuki/validators`: runtime validation schemas for request input.
 
-> Scaffolded with `bun init`. `src/index.ts` is still empty.
-
 ## What goes here
 
 - Schemas for request bodies, params and query strings, one file per resource
@@ -25,7 +23,7 @@ router.post("/", validate(createEvidenceSchema), createEvidence);
 
 Add modules under `src/` and import them by subpath (`@kuki/validators/<file>`), or re-export them from `src/index.ts`.
 
-No validation library is installed yet (e.g. Zod). Add it here when you start writing schemas.
+Schemas use [Zod](https://zod.dev).
 
 ## Scripts
 

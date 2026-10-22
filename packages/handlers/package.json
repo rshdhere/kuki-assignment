@@ -17,5 +17,14 @@
     "@types/bun": "latest",
     "eslint": "10.9.1",
     "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "@kuki/ai": "workspace:*",
+    "@kuki/config": "workspace:*",
+    "@kuki/drizzle": "workspace:*",
+    "@kuki/s3": "workspace:*",
+    "@kuki/sqs": "workspace:*",
+    "@kuki/types": "workspace:*",
+    "drizzle-orm": "^0.45.4"
   }
 }

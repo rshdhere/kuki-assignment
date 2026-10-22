@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { cn } from "@kuki/ui/lib/utils";
 import { Icon } from "@/components/icon";
-import type { JobState, Mark, Origin } from "@/lib/data";
+import type { DocumentStatus, FactOrigin } from "@kuki/types";
+import type { Mark } from "@/lib/api";
+import { statusText } from "@/lib/format";
 
 type BadgeKind = "default" | "soft" | "calc" | "warn";
 
@@ -27,9 +29,11 @@ export function Badge({
 }
 
 /** Reported values come from a document; calculated values come from KuKi. */
-export function OriginBadge({ origin }: { origin: Origin }) {
+export function OriginBadge({ origin }: { origin: FactOrigin }) {
   return (
-    <Badge kind={origin === "Calculated" ? "calc" : "default"}>{origin}</Badge>
+    <Badge kind={origin === "calculated" ? "calc" : "default"}>
+      {origin === "calculated" ? "Worked out by KuKi" : "From the document"}
+    </Badge>
   );
 }
 
@@ -37,21 +41,16 @@ export function Status({
   state,
   label,
 }: {
-  state: JobState | "failed";
+  state: DocumentStatus;
   label?: string;
 }) {
-  const text =
-    label ??
-    {
-      succeeded: "Succeeded",
-      extracting: "Extracting",
-      retrying: "Retrying",
-      duplicate: "Duplicate",
-      failed: "Failed",
-    }[state];
+  const text = label ?? statusText[state];
   return (
     <span className="status">
       {state === "succeeded" && <Icon name="check-circle" color="var(--ok)" />}
+      {(state === "queued" || state === "awaiting_upload") && (
+        <Icon name="loader" color="var(--line-2)" />
+      )}
       {state === "extracting" && (
         <Icon name="loader" color="var(--calc)" className="spin" />
       )}
@@ -101,14 +100,23 @@ export function MarkLabel({ mark, change }: { mark: Mark; change?: string }) {
   return (
     <span className="status">
       {mark === "pass" && <Icon name="check" size={14} color="var(--ok)" />}
-      {mark === "fail" && <Icon name="x" size={14} color="var(--bad)" />}
+      {(mark === "fail" || mark === "error") && (
+        <Icon name="x" size={14} color="var(--bad)" />
+      )}
       {mark === "partial" && (
         <Icon name="minus-circle" size={14} color="var(--warn)" />
       )}
-      {mark === "pass" ? "Pass" : mark === "fail" ? "Fail" : "Partial"}
+      {
+        {
+          pass: "Right",
+          fail: "Wrong",
+          partial: "Partly right",
+          error: "No answer",
+        }[mark]
+      }
       {change && (
         <span className={change === "fixed" ? "chip-ok" : "chip-bad"}>
-          {change}
+          {change === "fixed" ? "Fixed" : "Worse"}
         </span>
       )}
     </span>

@@ -2,8 +2,6 @@
 
 `@kuki/types`: TypeScript types shared across the client, server and packages.
 
-> Scaffolded with `bun init`. `src/index.ts` is still empty.
-
 ## What goes here
 
 - Domain and DTO types used on both sides of the API

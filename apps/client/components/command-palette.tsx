@@ -11,44 +11,27 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Icon, type IconName } from "@/components/icon";
-import { adaniFacts, documents } from "@/lib/data";
+import { api } from "@/lib/api";
+import { docTypeLabel } from "@/lib/format";
 import { nav } from "@/lib/nav";
 
 interface Command {
   id: string;
-  group: "Screens" | "Documents" | "Facts";
+  group: "Screens" | "Documents";
   label: string;
   hint?: string;
   icon: IconName;
   href: string;
 }
 
-const commands: Command[] = [
-  ...nav.map((item) => ({
-    id: `screen:${item.href}`,
-    group: "Screens" as const,
-    label: item.label,
-    icon: item.icon,
-    href: item.href,
-  })),
-  ...documents.map((doc) => ({
-    id: `doc:${doc.file}`,
-    group: "Documents" as const,
-    label: doc.file,
-    hint: doc.type ?? "Unclassified",
-    icon: "doc" as const,
-    // Only the Adani bill has a facts screen so far.
-    href: doc.file.startsWith("Adani") ? "/facts" : "/",
-  })),
-  ...adaniFacts.map((fact) => ({
-    id: `fact:${fact.field}`,
-    group: "Facts" as const,
-    label: fact.field,
-    hint: fact.value,
-    icon: "table" as const,
-    href: "/facts",
-  })),
-];
+const screens: Command[] = nav.map((item) => ({
+  id: `screen:${item.href}`,
+  group: "Screens" as const,
+  label: item.label,
+  hint: item.hint,
+  icon: item.icon,
+  href: item.href,
+}));
 
 const noopSubscribe = () => () => {};
 
@@ -82,9 +65,34 @@ export function CommandPalette() {
     () => "⌘K",
   );
 
+  const [docCommands, setDocCommands] = useState<Command[]>([]);
+  // Refresh the document list each time the palette opens.
+  useEffect(() => {
+    if (!open) return;
+    api
+      .documents()
+      .then((docs) =>
+        setDocCommands(
+          docs
+            .filter((d) => d.status !== "duplicate")
+            .map((d) => ({
+              id: `doc:${d.id}`,
+              group: "Documents" as const,
+              label: d.filename,
+              hint:
+                docTypeLabel(d.docType) ??
+                (d.status === "failed" ? "Couldn't be read" : "Being read"),
+              icon: "doc" as const,
+              href: d.status === "succeeded" ? `/facts?id=${d.id}` : "/",
+            })),
+        ),
+      )
+      .catch(() => setDocCommands([]));
+  }, [open]);
   const results = useMemo(
-    () => commands.filter((command) => matches(command, query)),
-    [query],
+    () =>
+      [...screens, ...docCommands].filter((command) => matches(command, query)),
+    [query, docCommands],
   );
 
   const show = () => {

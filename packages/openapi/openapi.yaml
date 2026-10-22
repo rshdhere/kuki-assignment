@@ -22,3 +22,670 @@ paths:
                   status:
                     type: string
                     example: ok
+  /uploads:
+    post:
+      summary: Start uploads
+      description: >
+        Records a document per file. Files whose content (SHA-256) is already
+        in the system, or earlier in the same request, come back as
+        `duplicate` and must not be uploaded. Every other file gets a presigned
+        PUT: the client PUTs it to `url` with exactly the returned `headers`
+        (they are signed), then calls `POST /uploads/{uploadId}/complete`.
+      operationId: createUploads
+      tags: [Uploads]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [files]
+              properties:
+                files:
+                  type: array
+                  minItems: 1
+                  maxItems: 20
+                  items:
+                    $ref: "#/components/schemas/UploadRequestFile"
+      responses:
+        "201":
+          description: One slot per file, in request order
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [uploads]
+                properties:
+                  uploads:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: "#/components/schemas/PresignedUpload"
+                        - $ref: "#/components/schemas/DuplicateUpload"
+                      discriminator:
+                        propertyName: status
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+  /uploads/{uploadId}/complete:
+    post:
+      summary: Queue an uploaded file
+      description: >
+        Checks the object is in S3, marks the document `queued` and sends a
+        `document.uploaded` job to the extraction queue. Idempotent: calling it
+        again returns `already_completed` without queueing twice. If another
+        upload of the same content was queued first, the document becomes a
+        `duplicate` and nothing is queued.
+      operationId: completeUpload
+      tags: [Uploads]
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "202":
+          description: Queued for extraction, already queued, or a duplicate
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [uploadId, status, filename, size]
+                properties:
+                  uploadId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [queued, already_completed, duplicate]
+                  filename:
+                    type: string
+                  size:
+                    type: integer
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "404":
+          description: Nothing has been uploaded for this id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /documents:
+    get:
+      summary: List documents
+      description: Newest first. Pass `nextBefore` from a response as `before` to get the next page.
+      operationId: listDocuments
+      tags: [Documents]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: before
+          in: query
+          description: Only documents created before this time
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: A page of documents
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [documents, nextBefore]
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Document"
+                  nextBefore:
+                    type: [string, "null"]
+                    format: date-time
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+  /documents/{id}:
+    get:
+      summary: Get a document
+      operationId: getDocument
+      tags: [Documents]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The document, its events (oldest first) and its extracted facts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [document, events, facts, segments]
+                properties:
+                  document:
+                    $ref: "#/components/schemas/Document"
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DocumentEvent"
+                  facts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Fact"
+                  segments:
+                    type: array
+                    description: Page text (PDF) or sheet rows (spreadsheets) as citable segments
+                    items:
+                      type: object
+                      properties:
+                        ordinal:
+                          type: integer
+                        locator:
+                          type: object
+                        locatorLabel:
+                          type: string
+                        text:
+                          type: string
+                        scanned:
+                          type: boolean
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "404":
+          description: No document with this id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /events:
+    get:
+      summary: Activity feed
+      description: Latest events across all documents, newest first.
+      operationId: listEvents
+      tags: [Documents]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Latest events
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events]
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DocumentEvent"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+  /answers:
+    post:
+      summary: Ask a question
+      description: >
+        Answers a question over the selected processed documents (all of them
+        when `documentIds` is empty) with the Python AI service, and stores the
+        answer. Evidence quotes are checked against the cited page or cells and
+        calculations are re-evaluated; see `verified` and `matches`.
+      operationId: createAnswer
+      tags: [Answers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question]
+              properties:
+                question:
+                  type: string
+                  example: What electricity consumption does each bill report, and for which period?
+                documentIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        "201":
+          description: The stored answer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnswerRecord"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "503":
+          $ref: "#/components/responses/AiUnavailable"
+    get:
+      summary: Earlier answers
+      operationId: listAnswers
+      tags: [Answers]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [answers]
+                properties:
+                  answers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AnswerRecord"
+  /financial-year:
+    get:
+      summary: Financial-year totals and coverage
+      description: >
+        Selects dated quantity facts that fall in an Indian financial year
+        (1 April to 31 March), prorates records that cross its boundary, and
+        reports totals per document and series with month-by-month coverage.
+        Values from different organisations are never combined. Computed
+        deterministically by the AI service, without a model call.
+      operationId: getFinancialYear
+      tags: [Answers]
+      parameters:
+        - name: fy
+          in: query
+          required: true
+          schema:
+            type: string
+            example: 2024-25
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum: [electricity, water, waste, fuel, emissions, cost]
+        - name: documentIds
+          in: query
+          description: Comma-separated document ids; all processed documents when omitted
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Totals and coverage
+          content:
+            application/json:
+              schema:
+                type: object
+                description: See FinancialYearSummary in apps/ai/src/kuki_ai/schemas.py
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "503":
+          $ref: "#/components/responses/AiUnavailable"
+  /evaluations:
+    get:
+      summary: Saved eval runs
+      description: Baseline and improved eval results and their comparison, from apps/ai/evals/results.
+      operationId: getEvaluations
+      tags: [Evaluation]
+      responses:
+        "200":
+          description: Runs keyed by pipeline name, and the comparison
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runs:
+                    type: object
+                  comparison:
+                    type: [object, "null"]
+        "503":
+          $ref: "#/components/responses/AiUnavailable"
+components:
+  schemas:
+    UploadRequestFile:
+      type: object
+      required: [filename, contentType, size, sha256]
+      properties:
+        filename:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: Adani commercial electricity bill.pdf
+        contentType:
+          type: string
+          enum:
+            - application/pdf
+            - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+            - text/csv
+        size:
+          type: integer
+          minimum: 1
+          maximum: 26214400
+          description: Exact size in bytes; S3 rejects a body of any other size
+        sha256:
+          type: string
+          pattern: "^[a-f0-9]{64}$"
+          description: Hex SHA-256 of the file
+    PresignedUpload:
+      type: object
+      required: [status, uploadId, key, url, method, headers, expiresAt]
+      properties:
+        status:
+          type: string
+          enum: [upload]
+        uploadId:
+          type: string
+          format: uuid
+        key:
+          type: string
+          example: uploads/3f0b8f1e-6a8e-4c1e-9d4a-2a1f7c9b5e10
+        url:
+          type: string
+          format: uri
+        method:
+          type: string
+          enum: [PUT]
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Send these with the PUT; they are part of the signature
+        expiresAt:
+          type: string
+          format: date-time
+    DuplicateUpload:
+      type: object
+      required: [status, uploadId, duplicateOf]
+      properties:
+        status:
+          type: string
+          enum: [duplicate]
+        uploadId:
+          type: string
+          format: uuid
+        duplicateOf:
+          type: string
+          format: uuid
+          description: The document that already holds this content
+    DocumentStatus:
+      type: string
+      enum:
+        [
+          awaiting_upload,
+          queued,
+          extracting,
+          retrying,
+          succeeded,
+          failed,
+          duplicate,
+        ]
+      description: >
+        `awaiting_upload`: presigned, PUT not confirmed yet. `retrying`: an
+        attempt failed and SQS will deliver the job again. `failed`: out of
+        attempts, the job is headed for the DLQ. `duplicate`: same content as
+        `duplicateOf`, never uploaded or queued.
+    Document:
+      type: object
+      required:
+        [
+          id,
+          filename,
+          contentType,
+          size,
+          sha256,
+          status,
+          duplicateOf,
+          attempts,
+          lastError,
+          docType,
+          title,
+          organisation,
+          issuer,
+          summary,
+          issues,
+          factCount,
+          periodStart,
+          periodEnd,
+          pageCount,
+          createdAt,
+          uploadedAt,
+          completedAt,
+        ]
+      properties:
+        id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        contentType:
+          type: string
+        size:
+          type: integer
+        sha256:
+          type: string
+        status:
+          $ref: "#/components/schemas/DocumentStatus"
+        duplicateOf:
+          type: [string, "null"]
+          format: uuid
+        attempts:
+          type: integer
+          description: Extraction attempts so far
+        lastError:
+          type: [string, "null"]
+        docType:
+          type: [string, "null"]
+          description: >
+            Filled in by extraction: electricity_bill, water_bill,
+            consumption_workbook, waste_record, policy or other
+        title:
+          type: [string, "null"]
+        organisation:
+          type: [string, "null"]
+          description: Filled in by extraction
+        issuer:
+          type: [string, "null"]
+        summary:
+          type: [string, "null"]
+        issues:
+          type: array
+          items:
+            type: string
+          description: Inconsistencies and ambiguities noticed during extraction
+        factCount:
+          type: integer
+        periodStart:
+          type: [string, "null"]
+          format: date
+        periodEnd:
+          type: [string, "null"]
+          format: date
+        pageCount:
+          type: [integer, "null"]
+        createdAt:
+          type: string
+          format: date-time
+        uploadedAt:
+          type: [string, "null"]
+          format: date-time
+        completedAt:
+          type: [string, "null"]
+          format: date-time
+    DocumentEvent:
+      type: object
+      required: [id, documentId, type, message, attempt, createdAt]
+      properties:
+        id:
+          type: integer
+        documentId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            [
+              upload_started,
+              queued,
+              duplicate,
+              extraction_started,
+              extraction_failed,
+              extraction_succeeded,
+            ]
+        message:
+          type: string
+        attempt:
+          type: [integer, "null"]
+        createdAt:
+          type: string
+          format: date-time
+    Fact:
+      type: object
+      required:
+        [
+          id,
+          documentId,
+          key,
+          label,
+          category,
+          valueText,
+          origin,
+          locator,
+          locatorLabel,
+          verified,
+          verification,
+        ]
+      properties:
+        id:
+          type: integer
+        documentId:
+          type: string
+          format: uuid
+        key:
+          type: string
+          example: units_consumed
+        label:
+          type: string
+        category:
+          type: string
+        metric:
+          type: [string, "null"]
+        series:
+          type: [string, "null"]
+        valueText:
+          type: string
+          description: As written in the document
+        valueNumber:
+          type: [number, "null"]
+        unit:
+          type: [string, "null"]
+        periodStart:
+          type: [string, "null"]
+          format: date
+        periodEnd:
+          type: [string, "null"]
+          format: date
+        note:
+          type: [string, "null"]
+        origin:
+          type: string
+          enum: [reported, calculated]
+        locator:
+          type: object
+          properties:
+            page:
+              type: [integer, "null"]
+            sheet:
+              type: [string, "null"]
+            cell_range:
+              type: [string, "null"]
+        locatorLabel:
+          type: string
+          example: p.1
+        quote:
+          type: [string, "null"]
+        verified:
+          type: boolean
+          description: Whether the quote or value was found at the cited location
+        verification:
+          type: string
+        derivation:
+          type: [string, "null"]
+          description: How a calculated fact was derived
+    AnswerRecord:
+      type: object
+      required: [id, question, documentIds, status, answer, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        question:
+          type: string
+        documentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum: [answered, partial, insufficient_evidence, conflicting_evidence]
+        answer:
+          type: object
+          description: >
+            The AI service's answer as returned (snake_case): answer, key_values,
+            calculations (expression, result, computed, matches), evidence
+            (document_id, page or sheet and cell_range, quote, verified), gaps
+            and financial_year
+        createdAt:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    AiUnavailable:
+      description: The AI service is unreachable, timed out or rate limited; retry later
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    InvalidRequest:
+      description: The request failed validation
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, issues]
+            properties:
+              error:
+                type: string
+                enum: [invalid_request]
+              issues:
+                type: array
+                items:
+                  type: object
+                  required: [path, message]
+                  properties:
+                    path:
+                      type: string
+                    message:
+                      type: string

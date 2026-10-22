@@ -2,8 +2,6 @@
 
 `@kuki/config`: typed, validated runtime configuration for the server.
 
-> Scaffolded with `bun init`. `src/index.ts` is still empty.
-
 ## What goes here
 
 - Reading `process.env` once, validating it, and exporting a typed config object

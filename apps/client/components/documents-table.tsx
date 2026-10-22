@@ -1,138 +1,145 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import type { DocumentSummary } from "@kuki/types";
+import Link from "next/link";
+import { useState } from "react";
 import { Icon } from "@/components/icon";
-import { Badge, FilterButton, Status } from "@/components/ui";
-import type { DocumentRow } from "@/lib/data";
+import { Badge, Status } from "@/components/ui";
+import { docName, docTypeLabel, period, problemText } from "@/lib/format";
 
-/** Processing queue table with row selection. */
-export function DocumentsTable({ documents }: { documents: DocumentRow[] }) {
-  const [selected, setSelected] = useState<Set<string>>(() => new Set());
-  const selectAllRef = useRef<HTMLInputElement>(null);
-
-  const allSelected =
-    documents.length > 0 && selected.size === documents.length;
-  const someSelected = selected.size > 0 && !allSelected;
-
-  // `indeterminate` has no HTML attribute, so it has to be set on the element.
-  useEffect(() => {
-    if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected;
-  }, [someSelected]);
-
-  const toggleAll = () =>
-    setSelected(
-      allSelected ? new Set() : new Set(documents.map((d) => d.file)),
-    );
-
-  const toggle = (file: string) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(file)) next.delete(file);
-      else next.add(file);
-      return next;
-    });
+/** The uploaded documents. Ready documents open their facts. */
+export function DocumentsTable({
+  documents,
+  loading,
+}: {
+  documents: DocumentSummary[];
+  loading: boolean;
+}) {
+  const [filter, setFilter] = useState("");
+  const visible = documents.filter((d) =>
+    d.filename.toLowerCase().includes(filter.trim().toLowerCase()),
+  );
 
   return (
-    <section className="card" aria-label="Processing queue">
-      <div className="toolbar">
+    <section className="card" aria-label="Your documents">
+      <div className="card-head" style={{ padding: "16px 16px 12px" }}>
+        <div>
+          <h2 className="section-h">Your documents</h2>
+          <p className="section-d">
+            Open a ready document to see what KuKi found in it.
+          </p>
+        </div>
         <label htmlFor="filter" className="sr">
-          Filter files
+          Find a document
         </label>
         <input
           id="filter"
-          type="text"
+          type="search"
           className="field"
-          placeholder="Filter files…"
+          placeholder="Find a document…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
         />
-        <FilterButton>Status</FilterButton>
-        <FilterButton>Type</FilterButton>
-        <button
-          type="button"
-          className="btn btn-outline btn-sm"
-          style={{ marginLeft: "auto" }}
-        >
-          Columns
-        </button>
       </div>
       <div className="scroll bt">
-        <table className="tbl" style={{ minWidth: 960 }}>
+        <table className="tbl tbl-fixed" style={{ minWidth: 860 }}>
+          <colgroup>
+            <col style={{ width: "30%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "22%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: 48 }} />
+          </colgroup>
           <thead>
             <tr>
-              <th style={{ width: 32 }}>
-                <input
-                  ref={selectAllRef}
-                  type="checkbox"
-                  className="check"
-                  aria-label="Select all"
-                  checked={allSelected}
-                  onChange={toggleAll}
-                />
-              </th>
-              <th>File</th>
+              <th>Document</th>
               <th>Type</th>
               <th>Organisation</th>
               <th>Period</th>
               <th>Status</th>
-              <th>Attempts</th>
-              <th style={{ width: 44 }}>
-                <span className="sr">Actions</span>
+              <th>
+                <span className="sr">Open</span>
               </th>
             </tr>
           </thead>
           <tbody>
-            {documents.map((d) => {
-              const isSelected = selected.has(d.file);
-              const classes = [
-                d.state === "duplicate" && "dim",
-                isSelected && "selected",
-              ].filter(Boolean);
+            {visible.length === 0 && (
+              <tr>
+                <td colSpan={6} className="muted">
+                  {loading ? "Loading…" : "No documents match."}
+                </td>
+              </tr>
+            )}
+            {visible.map((d) => {
+              const problem = problemText(d.status, d.lastError);
+              const ready = d.status === "succeeded";
               return (
-                <tr
-                  key={d.file}
-                  className={classes.length ? classes.join(" ") : undefined}
-                >
+                <tr key={d.id}>
                   <td>
-                    <input
-                      type="checkbox"
-                      className="check"
-                      aria-label={`Select ${d.file}`}
-                      checked={isSelected}
-                      onChange={() => toggle(d.file)}
-                    />
-                  </td>
-                  <td>
-                    <div className="strong">{d.file}</div>
-                    <div className="meta">{d.meta}</div>
-                  </td>
-                  {d.type ? (
-                    <>
-                      <td>
-                        <Badge>{d.type}</Badge>
-                      </td>
-                      <td
-                        className={
-                          d.organisation === "Not stated" ? "muted" : undefined
-                        }
+                    {ready ? (
+                      <Link
+                        href={`/facts?id=${d.id}`}
+                        className="rowbtn strong"
                       >
-                        {d.organisation}
-                      </td>
-                      <td className="num">{d.period}</td>
-                    </>
-                  ) : (
-                    <td colSpan={3}>{d.organisation}</td>
-                  )}
-                  <td>
-                    <DocumentStatus state={d.state} note={d.note} />
+                        {docName(d.filename)}
+                      </Link>
+                    ) : (
+                      <span className="strong">{docName(d.filename)}</span>
+                    )}
+                    <div className="muted" style={{ fontSize: 12 }}>
+                      {d.filename}
+                      {ready && `, ${d.factCount} facts found`}
+                    </div>
                   </td>
-                  <td className="meta">{d.attempts}</td>
                   <td>
-                    <button
-                      type="button"
-                      className="icon-btn"
-                      aria-label={`Actions for ${d.file}`}
-                    >
-                      <Icon name="dots" />
-                    </button>
+                    {d.docType ? (
+                      <Badge>{docTypeLabel(d.docType)}</Badge>
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
+                  </td>
+                  <td className={d.organisation ? undefined : "muted"}>
+                    {d.organisation ?? (ready ? "Not named" : "—")}
+                  </td>
+                  <td className="num">
+                    {d.periodStart || d.periodEnd ? (
+                      period(d.periodStart, d.periodEnd)
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
+                  </td>
+                  <td>
+                    <Status state={d.status} />
+                    {problem && (
+                      <div
+                        className="muted"
+                        style={{ fontSize: 12, marginTop: 2 }}
+                      >
+                        {problem}
+                      </div>
+                    )}
+                    {d.status === "extracting" && (
+                      <div
+                        className="bar indet"
+                        role="progressbar"
+                        aria-label="Reading"
+                        style={{ marginTop: 6 }}
+                      >
+                        <i />
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    {ready && (
+                      <Link
+                        className="icon-btn"
+                        href={`/facts?id=${d.id}`}
+                        aria-label={`Open ${d.filename}`}
+                      >
+                        <Icon name="chevron-right" />
+                      </Link>
+                    )}
                   </td>
                 </tr>
               );
@@ -140,59 +147,6 @@ export function DocumentsTable({ documents }: { documents: DocumentRow[] }) {
           </tbody>
         </table>
       </div>
-      <div className="foot">
-        <span aria-live="polite">
-          Example states · {selected.size} of {documents.length} rows selected
-        </span>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button type="button" className="btn btn-outline btn-sm" disabled>
-            Previous
-          </button>
-          <button type="button" className="btn btn-outline btn-sm">
-            Next
-          </button>
-        </div>
-      </div>
     </section>
   );
-}
-
-function DocumentStatus({
-  state,
-  note,
-}: {
-  state: DocumentRow["state"];
-  note?: string;
-}) {
-  if (state === "extracting") {
-    return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 6,
-          minWidth: 170,
-        }}
-      >
-        <span className="status">
-          <Status state="extracting" label="Extracting" />
-          <span className="muted">{note}</span>
-        </span>
-        <div className="bar indet" role="progressbar" aria-label="Extracting">
-          <i />
-        </div>
-      </div>
-    );
-  }
-  if (state === "retrying") {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Status state="retrying" label="Retrying in 8 s" />
-        <span className="muted" style={{ fontSize: 12 }}>
-          {note}
-        </span>
-      </div>
-    );
-  }
-  return <Status state={state} />;
 }

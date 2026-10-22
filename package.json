@@ -10,7 +10,13 @@
     "prepare": "husky",
     "format:check": "prettier --check .",
     "test": "turbo run test",
-    "test:e2e": "turbo run test:e2e"
+    "test:e2e": "turbo run test:e2e",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:generate": "cd packages/drizzle && bun run db:generate",
+    "db:migrate": "cd packages/drizzle && bun run db:migrate",
+    "db:seed": "cd packages/drizzle && bun run db:seed",
+    "db:studio": "cd packages/drizzle && bun run db:studio"
   },
   "devDependencies": {
     "eslint": "10.9.1",
