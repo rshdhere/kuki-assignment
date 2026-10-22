@@ -26,6 +26,14 @@ Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1Tb
 - `tooling/eslint-config`: shared ESLint config (`@kuki/eslint-config`)
 - `tooling/typescript-config`: shared tsconfigs (`@kuki/typescript-config`)
 
+## API documentation
+
+Swagger UI: [http://localhost:4000/docs](http://localhost:4000/docs). OpenAPI specification: [packages/openapi/openapi.yaml](packages/openapi/openapi.yaml).
+
+![Swagger UI showing health, upload and document endpoints](docs/swagger-uploads-documents.png)
+
+![Swagger UI showing answers, financial-year totals, evaluations and schemas](docs/swagger-answers-evaluations.png)
+
 ## AWS infrastructure
 
 ### S3
