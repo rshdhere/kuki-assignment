@@ -20,11 +20,13 @@
       "name": "client",
       "version": "0.1.0",
       "dependencies": {
+        "@kuki/openapi": "workspace:*",
         "@kuki/types": "workspace:*",
         "@kuki/ui": "workspace:*",
         "next": "16.3.8",
         "react": "19.2.8",
         "react-dom": "19.2.8",
+        "swagger-ui-dist": "5.34.0",
       },
       "devDependencies": {
         "@kuki/eslint-config": "workspace:*",

@@ -48,3 +48,7 @@ data/documents/*
 demo.md
 .env*
 !.env.example
+
+# API docs generated from workspace packages by the Next.js build
+apps/client/public/swagger-ui/
+apps/client/public/openapi.yaml

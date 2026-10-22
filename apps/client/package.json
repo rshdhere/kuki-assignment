@@ -4,8 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3000",
-    "build": "next build",
+    "dev": "node scripts/prepare-docs.mjs --dev && next dev --port 3000",
+    "build": "node scripts/prepare-docs.mjs && next build",
     "start": "next start",
     "lint": "eslint --max-warnings 0",
     "check-types": "next typegen && tsc --noEmit"
@@ -15,7 +15,9 @@
     "@kuki/ui": "workspace:*",
     "next": "16.3.8",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "@kuki/openapi": "workspace:*",
+    "swagger-ui-dist": "5.34.0"
   },
   "devDependencies": {
     "@kuki/eslint-config": "workspace:*",

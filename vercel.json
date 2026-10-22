@@ -51,18 +51,6 @@
       }
     },
     {
-      "source": "/docs/:path(.*)?",
-      "destination": {
-        "service": "api"
-      }
-    },
-    {
-      "source": "/openapi.yaml",
-      "destination": {
-        "service": "api"
-      }
-    },
-    {
       "source": "/(.*)",
       "destination": {
         "service": "dashboard"

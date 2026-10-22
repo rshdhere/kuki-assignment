@@ -15,7 +15,7 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: `bun x next dev --port ${PORT}`,
+    command: `node scripts/prepare-docs.mjs --dev && bun x next dev --port ${PORT}`,
     cwd: "../../apps/client",
     url: baseURL,
     reuseExistingServer: !process.env.CI,

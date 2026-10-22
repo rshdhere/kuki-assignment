@@ -36,3 +36,8 @@ res.type("application/yaml").sendFile(openApiSpecPath);
 bun run lint         # ESLint
 bun run check-types  # tsc --noEmit
 ```
+
+The Next.js dashboard also serves `/docs` and `/openapi.yaml`. Its dev and build
+scripts copy Swagger assets and the shared spec into `public`; production defaults
+to the same-origin `/api` server, and `NEXT_PUBLIC_API_URL` can override it. Vercel
+routes these docs URLs to the dashboard, so docs do not depend on API startup.
