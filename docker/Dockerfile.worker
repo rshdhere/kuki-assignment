@@ -1,0 +1,9 @@
+FROM oven/bun:1.2.3-debian AS bun
+
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+WORKDIR /app
+COPY . .
+RUN bun install --frozen-lockfile --ignore-scripts
+RUN cd apps/ai && uv sync --frozen --no-dev --python /usr/local/bin/python3.12
+CMD ["bash", "scripts/start-worker.sh"]

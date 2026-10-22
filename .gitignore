@@ -46,3 +46,5 @@ data/documents/*
 
 # Personal demo notes
 demo.md
+.env*
+!.env.example

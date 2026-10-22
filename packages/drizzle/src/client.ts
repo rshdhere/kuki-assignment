@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 // postgres.js connects lazily, so importing this doesn't need a running database.
-export const sql = postgres(config.databaseUrl, { max: 10 });
+export const sql = postgres(config.databaseUrl, { max: 10, prepare: false });
 
 export const db = drizzle(sql, { schema, casing: "snake_case" });
 

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["bom1"],
+  "services": {
+    "dashboard": {
+      "root": "apps/client",
+      "framework": "nextjs",
+      "buildCommand": "bun run build"
+    },
+    "api": {
+      "root": "apps/server",
+      "framework": "express",
+      "entrypoint": "src/app.ts",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "ai",
+          "format": "url",
+          "env": "AI_SERVICE_URL"
+        }
+      ],
+      "functions": { "src/app.ts": { "maxDuration": 300 } },
+      "rewrites": [{ "source": "/api/:path(.*)?", "destination": "/:path" }]
+    },
+    "ai": {
+      "root": "apps/ai",
+      "framework": "fastapi",
+      "entrypoint": "index.py",
+      "functions": {
+        "index.py": {
+          "maxDuration": 300,
+          "includeFiles": "{src/**,evals/results/**}"
+        }
+      }
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:path(.*)?", "destination": { "service": "api" } },
+    { "source": "/docs/:path(.*)?", "destination": { "service": "api" } },
+    { "source": "/openapi.yaml", "destination": { "service": "api" } },
+    { "source": "/(.*)", "destination": { "service": "dashboard" } }
+  ],
+  "daemons": {
+    "extraction-worker": {
+      "root": ".",
+      "entrypoint": "docker/Dockerfile.worker",
+      "instances": { "bom1": 1 },
+      "resources": { "requests": { "memory": "1Gi" } },
+      "terminationGracePeriodSeconds": 280
+    }
+  }
+}

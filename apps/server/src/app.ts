@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import {
   answersRouter,
   evaluationsRouter,
@@ -27,8 +28,15 @@ app.use("/answers", answersRouter);
 app.use("/financial-year", financialYearRouter);
 app.use("/evaluations", evaluationsRouter);
 
-app.get("/openapi.yaml", (_req, res) => {
-  res.type("application/yaml").sendFile(openApiSpecPath);
+app.get("/openapi.yaml", async (_req, res) => {
+  const spec = await readFile(openApiSpecPath, "utf8");
+  res
+    .type("application/yaml")
+    .send(
+      process.env.VERCEL
+        ? spec.replace("url: http://localhost:4000", "url: /api")
+        : spec,
+    );
 });
 
 app.use(
@@ -42,3 +50,5 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   res.status(500).json({ error: "internal_error" });
 };
 app.use(errorHandler);
+
+export default app;

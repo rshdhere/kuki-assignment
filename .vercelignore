@@ -1,0 +1,16 @@
+.agents
+.claude
+**/.env*
+**/node_modules
+**/.next
+**/.turbo
+**/.venv
+**/.harbor-venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/jobs
+**/evals/.cache
+**/evals/harbor/tasks
+data/documents
+*.zip
