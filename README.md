@@ -12,8 +12,6 @@ Swagger UI: [http://localhost:4000/docs](http://localhost:4000/docs). OpenAPI sp
 
 ![Swagger UI showing health, upload and document endpoints](docs/swagger-uploads-documents.png)
 
-![Swagger UI showing answers, financial-year totals, evaluations and schemas](docs/swagger-answers-evaluations.png)
-
 ## AWS infrastructure
 
 ### S3
