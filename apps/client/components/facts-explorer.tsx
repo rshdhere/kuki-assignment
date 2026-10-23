@@ -95,20 +95,24 @@ export function FactsExplorer({
                 {facts.length} fact{facts.length === 1 ? "" : "s"}
               </h2>
               <span style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-                <span className="legend">
-                  <i style={{ background: "var(--ok)" }} />
-                  Found at source {found}
-                </span>
+                {found > 0 && (
+                  <span className="legend">
+                    <i style={{ background: "var(--ok)" }} />
+                    Found at source {found}
+                  </span>
+                )}
                 {unconfirmed > 0 && (
                   <span className="legend">
                     <i style={{ background: "var(--warn)" }} />
                     Not confirmed {unconfirmed}
                   </span>
                 )}
-                <span className="legend">
-                  <i style={{ background: "var(--calc)" }} />
-                  Calculated {calculated}
-                </span>
+                {calculated > 0 && (
+                  <span className="legend">
+                    <i style={{ background: "var(--calc)" }} />
+                    Calculated {calculated}
+                  </span>
+                )}
               </span>
             </div>
             <div
@@ -233,7 +237,9 @@ export function FactsExplorer({
                             )}
                           </td>
                           <td className="num" style={{ fontWeight: 500 }}>
-                            {f.valueText}
+                            <span className="clamp-3" title={f.valueText}>
+                              {f.valueText}
+                            </span>
                           </td>
                           <td style={{ fontSize: 14 }}>
                             <CheckText fact={f} />
@@ -302,8 +308,8 @@ function Issues({ issues }: { issues: string[] }) {
       >
         <div className="alert-title">
           {issues.length === 1
-            ? "1 check failed in this document"
-            : `${issues.length} checks failed in this document`}
+            ? "1 thing to double-check in this document"
+            : `${issues.length} things to double-check in this document`}
         </div>
         <ul className="alert-body" style={{ margin: 0, paddingLeft: 18 }}>
           {shown.map((issue) => (
@@ -324,6 +330,19 @@ function Issues({ issues }: { issues: string[] }) {
     </section>
   );
 }
+
+/** Values longer than this are text, not a headline figure. */
+const SHORT_VALUE = 32;
+
+/**
+ * PDF text keeps the page's layout spacing: wide gaps, deep indents and blank
+ * runs. Tightened here so the excerpt reads as text; tables keep a double space.
+ */
+const tidy = (text: string) =>
+  text
+    .replace(/[ \t]{3,}/g, "  ")
+    .replace(/(?<=\n)[ \t]+/g, "")
+    .replace(/\n{3,}/g, "\n\n");
 
 function SourcePanel({
   fact,
@@ -355,18 +374,25 @@ function SourcePanel({
   return (
     <section className="card pad" aria-label="Source">
       <div className="card-head">
-        <h2 className="section-h">
-          Source · {placeText(fact.locator).toLowerCase()}
-        </h2>
+        <h2 className="section-h">Source</h2>
+        <span className="mono muted">{placeText(fact.locator)}</span>
       </div>
 
-      <div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <div className="muted" style={{ fontSize: 14 }}>
           {fact.label}
         </div>
+        {/* Figures read as a headline; sentences and lists as text. */}
         <div
-          className="stat"
-          style={{ fontSize: 24, overflowWrap: "anywhere" }}
+          className={
+            fact.valueText.length <= SHORT_VALUE ? "stat" : "source-value"
+          }
+          style={
+            fact.valueText.length <= SHORT_VALUE
+              ? { fontSize: 24, overflowWrap: "anywhere" }
+              : undefined
+          }
+          title={fact.valueText}
         >
           {fact.valueText}
         </div>
@@ -380,14 +406,14 @@ function SourcePanel({
         >
           {range ? (
             <>
-              {segment.text.slice(0, range[0])}
+              {tidy(segment.text.slice(0, range[0]))}
               <mark ref={markRef} className="hl-inline">
-                {segment.text.slice(range[0], range[1])}
+                {tidy(segment.text.slice(range[0], range[1]))}
               </mark>
-              {segment.text.slice(range[1])}
+              {tidy(segment.text.slice(range[1]))}
             </>
           ) : (
-            segment.text
+            tidy(segment.text)
           )}
         </pre>
       )}

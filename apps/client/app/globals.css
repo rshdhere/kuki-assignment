@@ -1039,6 +1039,27 @@ html {
   border-radius: 3px;
   color: var(--ink);
   background: var(--mark);
+  /* A highlight that wraps keeps its rounding and padding on every line. */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+/* A long value in the source panel: readable text, not a headline. */
+.source-value {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  overflow: hidden;
+}
+/* Long values in a table cell stop at three lines; the source panel has the rest. */
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 .source-text {
   margin: 0;
