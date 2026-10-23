@@ -14,5 +14,15 @@ if (!url) {
   );
 }
 
+try {
+  const parsed = new URL(url);
+  if (!["postgres:", "postgresql:"].includes(parsed.protocol))
+    throw new Error();
+} catch {
+  throw new Error(
+    "Deployment database configuration must be a valid PostgreSQL URL, not a redacted value",
+  );
+}
+
 await migrateDatabase(url);
 console.log("Database migrations applied successfully");

@@ -174,10 +174,10 @@ jobs:
         run: npm install --global "vercel@$VERCEL_CLI_VERSION"
       - name: Install migration dependencies
         run: bun install --frozen-lockfile
-      - name: Pull production environment
-        run: vercel env pull .env.production.local --environment=production --yes --token="$VERCEL_TOKEN"
       - name: Apply production database migrations
-        run: bun --env-file=.env.production.local packages/drizzle/src/deploy.ts
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: bun packages/drizzle/src/deploy.ts
       - name: Prepare worker build context
         run: bash scripts/prepare-worker-build.sh
       # Daemon images must be built on Vercel; local `vercel build` rejects them.
