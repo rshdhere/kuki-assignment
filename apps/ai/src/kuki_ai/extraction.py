@@ -1,13 +1,15 @@
 """Classifies a document and extracts facts tied to their page or cell range."""
 
 import base64
+import calendar
+import re
 from datetime import date
 
 from kuki_ai import llm
-from kuki_ai.grounding import verify
+from kuki_ai.grounding import as_number, expand_range, verify
 from kuki_ai.parsing import ParsedDocument, parse_document
 from kuki_ai.pipeline import Pipeline, get_pipeline
-from kuki_ai.schemas import Extraction, ExtractionOut, Fact, Locator
+from kuki_ai.schemas import Extraction, ExtractionOut, Fact, FactOut, Locator, Segment
 
 INSTRUCTIONS = """\
 You are a meticulous sustainability data analyst. You read one business document \
@@ -39,7 +41,8 @@ billing period, previous and current meter readings with dates, multiplying fact
 consumption for every unit printed, contract demand, the main charges and taxes, and \
 every payable amount with its due date.
 - Spreadsheets: every value of every series (each monthly value in each column), with \
-the same series name on every row and the row's period; and every total, subtotal or \
+the same series name on every row and the row's period. One fact per cell: never put a \
+column's values into one fact as a list. Also every total, subtotal or \
 summary cell as its own fact whose key contains "total". If totals and their parts \
 look inconsistent, say so in issues without computing a corrected value.
 - Records and forms: every entry with its date, quantity, unit and description; who \
@@ -98,6 +101,106 @@ def _days(start: str | None, end: str | None) -> int | None:
         return None
 
 
+_MONTHS = {
+    name.lower(): i
+    for i in range(1, 13)
+    for name in (calendar.month_name[i], calendar.month_abbr[i])
+}
+_ISO_MONTH = re.compile(r"^(\d{4})-(\d{2})-\d{2}")
+_YEAR = re.compile(r"\b(19|20)\d{2}\b")
+_REF_PARTS = re.compile(r"^([A-Z]{1,3})(\d+)$")
+
+
+def _row_month(row: list[float | str], year: int | None) -> tuple[int, int] | None:
+    """The (year, month) a sheet row is about, from a month name or date in its cells.
+
+    None when the row names a span instead ("Jan - Mar" on a quarterly row), so a
+    quarter's value is never booked to its first month.
+    """
+    found: tuple[int, int] | None = None
+    for value in row:
+        if not isinstance(value, str):
+            continue
+        if iso := _ISO_MONTH.match(value):
+            return int(iso[1]), int(iso[2])
+        months = {_MONTHS[w] for w in re.split(r"[\s\-/'.,]+", value.lower()) if w in _MONTHS}
+        if len(months) > 1:
+            return None
+        if months and not found:
+            named = _YEAR.search(value)
+            y = int(named[0]) if named else year
+            if y:
+                found = (y, months.pop())
+    return found
+
+
+def _col_row(ref: str) -> tuple[str, int]:
+    """`F14` -> ("F", 14). Refs come from expand_range or the parser, so they're well formed."""
+    parts = _REF_PARTS.match(ref)
+    assert parts, ref
+    return parts[1], int(parts[2])
+
+
+def _render(number: float) -> str:
+    return str(int(number)) if number.is_integer() else f"{number:g}"
+
+
+# Sheet name -> row number -> that row's cells as (ref, value), left to right.
+_Rows = dict[str, dict[int, list[tuple[str, float | str]]]]
+
+
+def _per_cell(fact: FactOut, rows: _Rows) -> list[FactOut] | None:
+    """One fact per row for a column range the model returned as a single listed value."""
+    source = fact.source
+    if fact.value_number is not None or not source.sheet or not source.cell_range:
+        return None
+    sheet = rows.get(source.sheet)
+    refs = expand_range(source.cell_range)
+    if not sheet or len(refs) < 2 or len({_col_row(r)[0] for r in refs}) != 1:
+        return None  # only single columns, one row per period
+    year = int(fact.period_start[:4]) if fact.period_start else None
+    split: list[FactOut] = []
+    for ref in refs:
+        row = sheet.get(_col_row(ref)[1], [])
+        value = next((v for r, v in row if r == ref), None)
+        number = as_number(value) if value is not None else None
+        when = _row_month([v for r, v in row if r != ref], year)
+        if number is None or when is None:
+            return None  # can't place every row in a month, so leave it as the model gave it
+        y, m = when
+        text = _render(number)
+        split.append(
+            fact.model_copy(
+                update={
+                    "key": f"{fact.key}_{y}_{m:02d}",
+                    "label": f"{fact.label}, {calendar.month_abbr[m]} {y}",
+                    "series": fact.series or fact.label,
+                    "value_text": f"{text} {fact.unit}" if fact.unit else text,
+                    "value_number": number,
+                    "period_start": f"{y}-{m:02d}-01",
+                    "period_end": f"{y}-{m:02d}-{calendar.monthrange(y, m)[1]:02d}",
+                    "source": source.model_copy(update={"cell_range": ref, "quote": text}),
+                }
+            )
+        )
+    return split
+
+
+def _split_ranges(facts: list[FactOut], segments: list[Segment]) -> list[FactOut]:
+    """Models sometimes list a whole monthly column as one fact; split it into its months."""
+    rows: _Rows = {}
+    for segment in segments:
+        if not segment.cells or not segment.locator.sheet:
+            continue
+        sheet = rows.setdefault(segment.locator.sheet, {})
+        for ref, value in segment.cells.items():
+            sheet.setdefault(_col_row(ref)[1], []).append((ref, value))
+    out: list[FactOut] = []
+    for fact in facts:
+        out.extend(_per_cell(fact, rows) or [fact])
+    return out
+
+
 def _calculated_facts(doc_type: str, facts: list[Fact]) -> list[Fact]:
     """Derived values a reviewer expects next to a bill, marked as calculated."""
     if not doc_type.endswith("_bill"):
@@ -141,7 +244,7 @@ def extract_parsed(parsed: ParsedDocument, pipeline: Pipeline) -> Extraction:
         raise llm.PermanentError("The model returned no extraction")
 
     facts: list[Fact] = []
-    for f in out.facts:
+    for f in _split_ranges(out.facts, parsed.segments):
         locator = Locator(page=f.source.page, sheet=f.source.sheet, cell_range=f.source.cell_range)
         verified, why = verify(
             parsed.segments,
