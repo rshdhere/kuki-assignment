@@ -19,10 +19,54 @@ env:
   NEXT_TELEMETRY_DISABLED: "1"
 
 jobs:
-  checks:
-    name: Lint, type-check, build & integration tests
+  lint:
+    name: Lint & type checks
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.3"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.5"
+          enable-cache: true
+          cache-dependency-glob: apps/ai/uv.lock
+      - name: Install JavaScript dependencies
+        run: bun install --frozen-lockfile
+      - name: Install Python dependencies
+        run: uv sync --frozen --python 3.12
+        working-directory: apps/ai
+      - name: Lint
+        run: bun run lint
+      - name: Type-check
+        run: bun run check-types
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.3"
+      - name: Install JavaScript dependencies
+        run: bun install --frozen-lockfile
+      - name: Build
+        run: bun run build
+
+  integration:
+    name: Integration & Python tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:17-alpine
@@ -57,17 +101,11 @@ jobs:
       - name: Install Python dependencies
         run: uv sync --frozen --python 3.12
         working-directory: apps/ai
-      - name: Lint
-        run: bun run lint
-      - name: Type-check
-        run: bun run check-types
-      - name: Build
-        run: bun run build
       - name: Integration and Python tests
         run: bun run test -- --force
 
   e2e:
-    name: End-to-end browser tests
+    name: End-to-end tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -95,7 +133,7 @@ jobs:
 
   deploy:
     name: Production deployment
-    needs: [checks, e2e]
+    needs: [lint, build, integration, e2e]
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name != 'pull_request'
