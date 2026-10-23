@@ -2,13 +2,81 @@
 
 ![Walkthrough of the KuKi evidence dashboard](docs/introduction.gif)
 
+**Architecture:** [View the diagram in Excalidraw](https://excalidraw.com/#json=kJGpC1FWlSz-f_mnFilPS,MNsohFFPIrbY_NnBFaH5Nw) · [Download the editable diagram](docs/architecture.excalidraw)
+
+[![KuKi Evidence Dashboard architecture](docs/architecture.png)](https://excalidraw.com/#json=kJGpC1FWlSz-f_mnFilPS,MNsohFFPIrbY_NnBFaH5Nw)
+
+Upload sustainability documents (bills, spreadsheets, waste records, policies), watch them process in the background, inspect every extracted fact next to the page or cell it came from, ask questions with cited answers, and get Indian financial-year totals with their coverage.
+
+**Try it without installing anything:** [kuki-assignment.vercel.app](https://kuki-assignment.vercel.app) (the six assignment documents are already loaded).
+
+## Run it locally
+
+You need **Docker**, **[Bun](https://bun.sh)**, **[uv](https://docs.astral.sh/uv/)**, **Node 24+**, an **OpenAI API key**, and the **[AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)** signed in to an AWS account (`aws configure`). The setup script checks for each one and tells you how to install anything missing.
+
+```sh
+git clone https://github.com/rshdhere/kuki-assignment.git && cd kuki-assignment
+OPENAI_API_KEY=sk-... bun run setup     # everything below, in one go
+bun run dev                             # client :3000 · API :4000 · AI service :8000 · worker
+```
+
+Open **http://localhost:3000**, drop the six documents on the Documents page, and follow them through Extracted facts, Ask, Financial year and Evaluation. The API is documented at http://localhost:4000/docs.
+
+`bun run setup` is safe to rerun and never overwrites an existing `.env`. It:
+
+1. checks for the tools above;
+2. installs the JavaScript and Python dependencies;
+3. creates `apps/{server,worker,ai}/.env` and `apps/client/.env.local` from their examples and saves your OpenAI key;
+4. creates **your own** S3 bucket and SQS queues (`scripts/setup-aws.sh`, see [Why S3 and SQS](#why-s3-and-sqs)) and writes their names into the `.env` files;
+5. starts Postgres in Docker and runs the migrations;
+6. unpacks `kuki-assignment-dataset.zip` into `data/documents/` if you put it in the repository root.
+
+If the AWS CLI isn't signed in yet, setup skips step 4 and says so: run `aws configure`, then `bun run setup:aws`. The bucket is private (`kuki-documents-<account-id>-<region>`), and the region defaults to `ap-south-1` (override with `AWS_REGION=...`).
+
+### Run the evals
+
+With the documents in `data/documents/`:
+
+```sh
+cd apps/ai
+uv run kuki-eval run --pipeline baseline
+uv run kuki-eval run --pipeline improved
+uv run kuki-eval compare baseline improved    # writes evals/results/comparison.md
+```
+
+The 13 cases, the scoring, the saved baseline and improved runs, the weakness that was fixed and the known limitations are in [apps/ai/README.md](apps/ai/README.md#evals). The dashboard's Evaluation page shows the same results.
+
+### If something doesn't work
+
+| Symptom                                      | Fix                                                                                                  |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Uploads fail straight away in the browser    | The bucket's CORS must allow `http://localhost:3000`. Rerun `bun run setup:aws`.                     |
+| Documents stay on "Waiting to be read"       | The worker isn't running or has no queue. Check `AWS_SQS_QUEUE_URL` in `apps/worker/.env`.           |
+| Documents fail with an OpenAI error          | Check `OPENAI_API_KEY` (and `OPENAI_MODEL`) in `apps/ai/.env`.                                       |
+| `db:seed` can't connect                      | Start Docker, then `bun run db:up`. Postgres listens on `localhost:5432` (user and password `kuki`). |
+| Port 3000, 4000, 5432 or 8000 already in use | Stop whatever is using it; the apps expect these ports.                                              |
+
 ## API documentation
 
 [Swagger UI](https://kuki-assignment.vercel.app/docs/)
 
 [![Swagger UI showing the KuKi Evidence API uploads and documents endpoints](docs/swagger-uploads-documents.png)](https://kuki-assignment.vercel.app/docs/)
 
-## AWS infrastructure
+## Why S3 and SQS
+
+**S3 holds the original files.** The API never handles file bytes: it hands the browser a presigned PUT and the file goes straight to S3. That keeps uploads off the serverless API, whose request bodies are capped at a few megabytes on Vercel, while a scanned PDF can be far larger. Each presigned URL signs the file's size, type and SHA-256, so S3 itself rejects an upload that doesn't match what was approved. Files are stored with eleven nines of durability, encrypted at rest and private, and they stay the source of truth: any document can be re-extracted later with a better model without asking anyone to upload it again.
+
+**SQS turns "process this document" into a job that can't get lost.** The worker long-polls the queue; a job that crashes or times out simply reappears after the visibility timeout and is retried with backoff. After 10 failed receives it moves to a dead-letter queue to be inspected and redriven, instead of retrying forever. Jobs survive restarts of every app, there is no queue server to run or patch, and many workers can consume the same queue.
+
+**And both cost almost nothing.** Prices are for `ap-south-1` at the time of writing; see [S3 pricing](https://aws.amazon.com/s3/pricing/) and [SQS pricing](https://aws.amazon.com/sqs/pricing/).
+
+| What                 | Price                                                                    | KuKi's usage                                                                                                                                           | Monthly cost                    |
+| -------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| SQS requests         | First **1 million free every month** (no expiry), then $0.40 per million | An idle worker long-polls 3 times a minute (20-second waits), about 130,000 requests a month. Each document adds about 3 more (send, receive, delete). | **$0** until ~290,000 documents |
+| S3 storage           | about $0.025 per GB-month                                                | The six assignment documents are 3.8 MB. 1,000 typical documents are about 1 GB.                                                                       | about **$0.03** per 1,000 docs  |
+| S3 uploads and reads | about $0.005 per 1,000 PUTs, $0.0004 per 1,000 GETs                      | One PUT per upload, one GET per extraction.                                                                                                            | under **$0.01** per 1,000 docs  |
+
+Even the smallest server for a self-hosted queue (Redis, RabbitMQ) would cost more each month, and we would still have to build and operate retries, a dead-letter queue and persistence ourselves. Duplicate uploads cost nothing either: files are matched by SHA-256 before upload, so a file already in KuKi is never stored or processed twice.
 
 ### S3
 
@@ -27,21 +95,23 @@ repository root. Run the same command before a manual Vercel deployment.
 
 ## Scripts
 
-| Command               | Description                                             |
-| --------------------- | ------------------------------------------------------- |
-| `bun run dev`         | Start all apps in dev mode                              |
-| `bun run build`       | Build all apps and packages                             |
-| `bun run lint`        | Lint all apps and packages                              |
-| `bun run check-types` | Type-check all apps and packages                        |
-| `bun run test`        | Integration tests (needs `db:up`) and Python unit tests |
-| `bun run db:up`       | Start the local Postgres                                |
-| `bun run db:down`     | Stop the local Postgres                                 |
-| `bun run db:generate` | Generate a migration from the schema                    |
-| `bun run db:migrate`  | Apply migrations                                        |
-| `bun run db:seed`     | Create missing databases and migrate them               |
-| `bun run db:studio`   | Open Drizzle Studio                                     |
-| `bun run test:e2e`    | Run Playwright end-to-end tests                         |
-| `bun run format`      | Format the repo with Prettier                           |
+| Command               | Description                                                  |
+| --------------------- | ------------------------------------------------------------ |
+| `bun run setup`       | One-time local setup (see [Run it locally](#run-it-locally)) |
+| `bun run setup:aws`   | Create your S3 bucket and SQS queues and wire them up        |
+| `bun run dev`         | Start all apps in dev mode                                   |
+| `bun run build`       | Build all apps and packages                                  |
+| `bun run lint`        | Lint all apps and packages                                   |
+| `bun run check-types` | Type-check all apps and packages                             |
+| `bun run test`        | Integration tests (needs `db:up`) and Python unit tests      |
+| `bun run db:up`       | Start the local Postgres                                     |
+| `bun run db:down`     | Stop the local Postgres                                      |
+| `bun run db:generate` | Generate a migration from the schema                         |
+| `bun run db:migrate`  | Apply migrations                                             |
+| `bun run db:seed`     | Create missing databases and migrate them                    |
+| `bun run db:studio`   | Open Drizzle Studio                                          |
+| `bun run test:e2e`    | Run Playwright end-to-end tests                              |
+| `bun run format`      | Format the repo with Prettier                                |
 
 Before the first e2e run, install the browser: `cd tests/e2e && bunx playwright install chromium`.
 

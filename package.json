@@ -2,6 +2,8 @@
   "name": "kuki-sus",
   "private": true,
   "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "setup:aws": "bash scripts/setup-aws.sh",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
