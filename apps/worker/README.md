@@ -20,6 +20,8 @@ the same receive count. The token is cleared on success or a recorded failure;
 a restarted worker can claim an interrupted document without waiting on a dead
 process. Apply database migration `0002_tough_meltdown.sql` before deploying the
 updated worker (`bun run db:migrate` against the target database).
+Production CI now applies pending migrations before deploying and checks the
+live data endpoints afterward.
 
 `SIGINT`/`SIGTERM` stop polling and let in-flight jobs finish.
 

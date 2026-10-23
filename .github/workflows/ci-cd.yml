@@ -148,6 +148,7 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       VERCEL_CLI_VERSION: ${{ vars.VERCEL_CLI_VERSION }}
+      PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://kuki-assignment.vercel.app' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -171,8 +172,16 @@ jobs:
           fi
       - name: Install Vercel CLI
         run: npm install --global "vercel@$VERCEL_CLI_VERSION"
+      - name: Install migration dependencies
+        run: bun install --frozen-lockfile
+      - name: Pull production environment
+        run: vercel env pull .env.production.local --environment=production --yes --token="$VERCEL_TOKEN"
+      - name: Apply production database migrations
+        run: bun --env-file=.env.production.local packages/drizzle/src/deploy.ts
       - name: Prepare worker build context
         run: bash scripts/prepare-worker-build.sh
       # Daemon images must be built on Vercel; local `vercel build` rejects them.
       - name: Build and deploy production on Vercel
         run: vercel deploy --prod --yes --token="$VERCEL_TOKEN"
+      - name: Verify production data endpoints
+        run: node scripts/verify-deployment.mjs "$PRODUCTION_URL"

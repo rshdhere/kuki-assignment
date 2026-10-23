@@ -119,6 +119,12 @@ Dockerfile directory as its build context, so CI runs
 `bash scripts/prepare-worker-build.sh` before deployment to stage a copy at the
 repository root. Run the same command before a manual Vercel deployment.
 
+Production CI pulls the production environment and applies pending database
+migrations before deploying. It then checks the live documents, extracted facts
+and evaluation endpoints; a passing `/health` alone does not count as a working
+deployment. For a manual deployment, apply migrations first with
+`bun --env-file=.env.production.local packages/drizzle/src/deploy.ts`.
+
 ## Scripts
 
 | Command               | Description                                                  |
