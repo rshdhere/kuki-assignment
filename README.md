@@ -2,9 +2,9 @@
 
 ## Design
 
-Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/BeooUKNEH8gXROC1TbMWEW/KuKi-Evidence-Dashboard?node-id=0-1&t=u0fQz3JjLMVKChmv-1)
+Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/mGmLPlKGNmLxhDSSjATCYs/KuKi-%E2%80%94-Dashboard?node-id=0-1&t=3zGa5UCzS8nvLtiX-1)
 
-[![Figma screens: Documents, Extracted facts, Ask, Financial year and Evaluation](docs/figma-screens.png)](https://www.figma.com/design/BeooUKNEH8gXROC1TbMWEW/KuKi-Evidence-Dashboard?node-id=0-1&t=u0fQz3JjLMVKChmv-1)
+[![Figma screens: Documents, Extracted facts, Ask, Financial year and Evaluation](docs/figma-screens.png)](https://www.figma.com/design/mGmLPlKGNmLxhDSSjATCYs/KuKi-%E2%80%94-Dashboard?node-id=0-1&t=3zGa5UCzS8nvLtiX-1)
 
 ## API documentation
 
