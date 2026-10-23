@@ -1,4 +1,4 @@
-name: linting, build & integration tests
+name: Quality checks & deployment
 
 on:
   pull_request:
@@ -20,7 +20,7 @@ env:
 
 jobs:
   checks:
-    name: Lint, types, build and tests
+    name: Lint, type-check, build & integration tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
     services:
@@ -67,7 +67,7 @@ jobs:
         run: bun run test -- --force
 
   e2e:
-    name: e2e tests
+    name: End-to-end browser tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -94,7 +94,7 @@ jobs:
           if-no-files-found: ignore
 
   deploy:
-    name: Deploy production
+    name: Production deployment
     needs: [checks, e2e]
     if: >-
       github.ref == 'refs/heads/main' &&
