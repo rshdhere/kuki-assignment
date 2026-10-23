@@ -11,13 +11,15 @@ class Pipeline:
     # Check evidence cell by cell for spreadsheets and line by line for
     # multi-column pages, instead of as one exact string (see grounding.verify).
     structured_evidence: bool = False
+    # Give the model deterministic verifier feedback before publishing an answer.
+    repair_answers: bool = False
 
 
 PIPELINES = {
     "baseline": Pipeline("baseline"),
-    # The one targeted change after the baseline eval: correct citations to
-    # sheet ranges and two-column pages were being rejected as unverified.
-    "improved": Pipeline("improved", structured_evidence=True),
+    # Structured verification plus bounded feedback repairs for bad citations
+    # or calculations. Baseline keeps the original one-pass answering behavior.
+    "improved": Pipeline("improved", structured_evidence=True, repair_answers=True),
 }
 
 DEFAULT_PIPELINE = "improved"

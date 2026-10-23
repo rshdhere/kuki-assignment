@@ -22,11 +22,13 @@ For example, asking whether a spreadsheet's monthly values agree with its annual
 
 The Evaluation page compares saved baseline and improved runs on **13 questions with expected answers worked out by hand** from the assignment documents. Cases cover bill amounts and consumption, meter arithmetic, waste totals, conflicting workbook totals, policy gaps and financial-year coverage. Select a result cell to inspect the question and its results.
 
-Each case is checked for **answer correctness, supporting evidence, calculation correctness and stated gaps**, where applicable. A pass earns 1 point and a partial result earns ½ point. The saved comparison improves from **11.5/13 to 13/13**: E09, E10 and E11 move from partial to pass, with no case-level regressions. Evidence support rises from **10/13 to 13/13** after adding cell-by-cell spreadsheet verification and line-by-line matching for two-column pages; the baseline already answered all 13 questions correctly.
+Each case is checked for **answer correctness, supporting evidence, calculation correctness and stated gaps**, where applicable. A pass earns 1 point and a partial result earns ½ point. The latest saved comparison improves from **10.5/13 (80.8%) to 13/13 (100%)**: E03, E09, E10 and E11 improve, with no case-level regressions. Evidence support rises from **10/13 to 13/13**. The improved pipeline checks spreadsheet cells and multi-column text, uses the bill's payment instructions for payment questions, and gives the model verifier feedback to repair unsupported citations before returning an answer.
 
 ![Evaluation dashboard comparing baseline and improved scores, case results and the four checks](docs/evaluation.png)
 
 These results describe the saved 13-case comparison, not a guarantee for every document. Citation ranges can still be too broad, and the suite does not cover all scanned-page or larger-document scenarios. See the [detailed results and limitations](apps/ai/README.md#eval-results-baseline--improved), [Harbor evaluation workflow](apps/ai/evals/harbor/README.md), and [local evaluation commands](#run-the-evals).
+
+Verification includes 60 integration tests, 43 Python tests, 18 browser tests, and real SQS crash recovery, transient retries, dead-lettering and redrive. The screenshots above illustrate the workflow and can show older saved scores.
 
 ## Run it locally
 

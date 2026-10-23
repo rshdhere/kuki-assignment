@@ -2,9 +2,9 @@
 
 | | baseline | improved |
 |---|---|---|
-| Score (pass = 1, partial = ½) | 88% | 100% |
-| Pass / partial / fail | 10 / 3 / 0 | 13 / 0 / 0 |
-| answer | 13/13 | 13/13 |
+| Score (pass = 1, partial = ½) | 81% | 100% |
+| Pass / partial / fail | 9 / 3 / 1 | 13 / 0 / 0 |
+| answer | 12/13 | 13/13 |
 | evidence | 10/13 | 13/13 |
 | calculation | 3/3 | 3/3 |
 | uncertainty | 6/6 | 6/6 |
@@ -13,7 +13,7 @@
 |---|---|---|---|---|
 | E01 Adani consumption and billing period | pass | pass |  | – |
 | E02 BESCOM consumption in kWh, not kVAh | pass | pass |  | – |
-| E03 Adani amount payable by the due date | pass | pass |  | – |
+| E03 Adani amount payable by the due date | fail | pass | fixed | – |
 | E04 BESCOM net amount payable | pass | pass |  | – |
 | E05 Water consumption vs meter readings | pass | pass |  | – |
 | E06 Water bill total due and GST | pass | pass |  | – |

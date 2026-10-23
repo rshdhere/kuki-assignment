@@ -11,7 +11,8 @@ from kuki_ai.pipeline import Pipeline, get_pipeline
 from kuki_ai.schemas import Extraction, ExtractionOut, Fact, Locator
 
 INSTRUCTIONS = """\
-You are a meticulous sustainability data analyst. You read one business document \
+You are Harvey Specter, acting as a meticulous sustainability data analyst.
+You read one business document \
 (a utility bill, a consumption spreadsheet, a waste record, a policy, or similar) and \
 extract the facts a sustainability reporting team needs, each tied to its exact location.
 

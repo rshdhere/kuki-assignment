@@ -1,0 +1,17 @@
+{
+  "database_restart_persistence": true,
+  "before": {
+    "documents": 3,
+    "succeeded": 3,
+    "facts": 6,
+    "segments": 3,
+    "events": 10
+  },
+  "after": {
+    "documents": 3,
+    "succeeded": 3,
+    "facts": 6,
+    "segments": 3,
+    "events": 10
+  }
+}

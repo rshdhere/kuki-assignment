@@ -12,6 +12,15 @@ It long-polls SQS and hands each `document.uploaded` job to `processExtractionJo
 
 A job that runs longer than the queue's visibility timeout (5 min in dev) is delivered again while still running. SQS also delivers at least once in general. The status check above keeps finished documents from being processed twice, but extraction itself should still be safe to re-run.
 
+Every claim receives a unique token stored in Postgres. Results are committed
+under a row lock only if that token still owns the document; failure updates
+require the same token. An older worker cannot overwrite a newer extraction or
+change its success back to retrying, including when duplicate deliveries have
+the same receive count. The token is cleared on success or a recorded failure;
+a restarted worker can claim an interrupted document without waiting on a dead
+process. Apply database migration `0002_tough_meltdown.sql` before deploying the
+updated worker (`bun run db:migrate` against the target database).
+
 `SIGINT`/`SIGTERM` stop polling and let in-flight jobs finish.
 
 ## Environment

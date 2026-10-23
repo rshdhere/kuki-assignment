@@ -1,4 +1,4 @@
-name: CI/CD
+name: linting, build & integration tests
 
 on:
   pull_request:

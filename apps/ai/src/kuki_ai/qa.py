@@ -30,7 +30,8 @@ MAX_TOOL_ROUNDS = 8
 CONTEXT_CHAR_BUDGET = 240_000
 
 INSTRUCTIONS = """\
-You are a meticulous sustainability data analyst answering questions about the \
+You are Harvey Specter, acting as a meticulous sustainability data analyst.
+You are answering questions about the \
 user's documents. Use only the documents provided.
 
 - Ground every factual statement in evidence. Each evidence entry cites one document \
@@ -47,6 +48,16 @@ and missing, records prorated, and documents outside the year. Don't add up valu
 from different organisations, different units (kWh vs kVAh) or overlapping series.
 - Be precise about which figure you report: name the exact amount (for example \
 "payable by the due date" rather than "after the due date") and the exact unit.
+- For a bill payment question, use the amount printed in the payment summary \
+beside its due date as the primary amount. Accounting subtotals, unrounded totals, \
+discounts and late-payment amounts are separate figures, not competing answers \
+to that payment instruction. Explain rounding or reconciliation gaps separately; \
+use conflicting_evidence only when sources give incompatible answers to the same \
+question under the same payment conditions.
+- Cite short, precise quotes copied from the source text, preserving its words \
+and line breaks. Do not reconstruct whole paragraphs from separate PDF columns. \
+For a policy's missing provision, state what you searched and cite its relevant \
+scope or commitments; do not invent a quotation asserting an absence.
 - status: "answered" when fully supported; "partial" when only part is supported; \
 "insufficient_evidence" when the documents don't contain it (say what you checked); \
 "conflicting_evidence" when documents or parts of one document disagree (show each value).
@@ -281,33 +292,82 @@ def answer_question(
         text_format=AnswerOut,
         tools=TOOLS,
     )
-    for _ in range(MAX_TOOL_ROUNDS):
-        calls = [item for item in response.output if item.type == "function_call"]
-        if not calls:
-            break
-        outputs = []
-        for call in calls:
-            try:
-                args = json.loads(call.arguments)
-            except json.JSONDecodeError:
-                args = {}
-            result = _run_tool(call.name, args, documents, state)
-            tool_calls.append({"name": call.name, "arguments": args, "result": result})
-            outputs.append(
-                {
-                    "type": "function_call_output",
-                    "call_id": call.call_id,
-                    "output": json.dumps(result),
-                }
+    # Verifier feedback is about the actual source/calculation, never eval-case
+    # expectations. A bounded repair can fix a citation without relaxing checks.
+    repairs = 2 if chosen.repair_answers else 0
+    for repair in range(repairs + 1):
+        for _ in range(MAX_TOOL_ROUNDS):
+            calls = [item for item in response.output if item.type == "function_call"]
+            if not calls:
+                break
+            outputs = []
+            for call in calls:
+                try:
+                    args = json.loads(call.arguments)
+                except json.JSONDecodeError:
+                    args = {}
+                result = _run_tool(call.name, args, documents, state)
+                tool_calls.append({"name": call.name, "arguments": args, "result": result})
+                outputs.append(
+                    {
+                        "type": "function_call_output",
+                        "call_id": call.call_id,
+                        "output": json.dumps(result),
+                    }
+                )
+            response = llm.parse(
+                instructions=INSTRUCTIONS,
+                input=outputs,
+                text_format=AnswerOut,
+                tools=TOOLS,
+                previous_response_id=response.id,
             )
+        out = response.output_parsed
+        if out is None:
+            raise llm.PermanentError("The model returned no answer")
+        checked = _check(out, documents, question, chosen, tool_calls, state.get("financial_year"))
+        problems = _validation_problems(checked)
+        if not problems or not chosen.repair_answers:
+            return checked
+        if repair == repairs:
+            if checked.status == "answered":
+                checked.status = "partial"
+            checked.gaps.extend(f"Evidence check: {problem}" for problem in problems)
+            return checked
         response = llm.parse(
             instructions=INSTRUCTIONS,
-            input=outputs,
+            input=[
+                {
+                    "role": "user",
+                    "content": "The source and calculation verifier found these problems:\n"
+                    + "\n".join(problems)
+                    + "\nReturn a corrected complete answer using the same selected documents. "
+                    "Use short exact quotes from the cited page or exact sheet cells. "
+                    "Re-run any incorrect arithmetic with the calculate tool. "
+                    "Keep evidence for every retained factual claim; do not merely remove "
+                    "failed citations while leaving unsupported claims. If support cannot "
+                    "be found, state the gap and use partial or insufficient_evidence.",
+                }
+            ],
             text_format=AnswerOut,
             tools=TOOLS,
             previous_response_id=response.id,
         )
-    out = response.output_parsed
-    if out is None:
-        raise llm.PermanentError("The model returned no answer")
-    return _check(out, documents, question, chosen, tool_calls, state.get("financial_year"))
+    raise AssertionError("Unreachable repair state")
+
+
+def _validation_problems(answer: Answer) -> list[str]:
+    problems = [f"{e.id}: {e.verification}" for e in answer.evidence if not e.verified]
+    problems += [
+        f"{c.id}: {c.expression} computes to {c.computed}, not the stated {c.result}"
+        for c in answer.calculations
+        if not c.matches
+    ]
+    ids = {e.id for e in answer.evidence}
+    referenced = set(re.findall(r"\[(E\d+)\]", answer.answer))
+    referenced.update(e for value in answer.key_values for e in value.evidence_ids)
+    referenced.update(e for calc in answer.calculations for e in calc.evidence_ids)
+    problems += [f"{ref}: referenced evidence is missing" for ref in sorted(referenced - ids)]
+    if not answer.evidence and answer.status in {"answered", "conflicting_evidence"}:
+        problems.append("No source evidence supports this answer")
+    return problems

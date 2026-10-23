@@ -122,6 +122,40 @@ def test_no_documents_is_insufficient_evidence():
     assert answer.status == "insufficient_evidence"
 
 
+def test_failed_citations_are_repaired_using_verifier_feedback(bill_pdf, monkeypatch):
+    calls = []
+
+    def fake_parse(**kwargs):
+        calls.append(kwargs)
+        out = _final() if len(calls) == 1 else _final(evidence=_final().evidence[:1])
+        return SimpleNamespace(id=f"r{len(calls)}", output=[], output_parsed=out)
+
+    monkeypatch.setattr(llm, "parse", fake_parse)
+    answer = qa.answer_question("How much electricity?", [_doc(bill_pdf)], "improved")
+
+    assert len(calls) == 2
+    assert calls[1]["previous_response_id"] == "r1"
+    assert "E2" in calls[1]["input"][0]["content"]
+    assert "Quote not found" in calls[1]["input"][0]["content"]
+    assert answer.evidence and all(e.verified for e in answer.evidence)
+
+
+def test_unrepaired_evidence_is_not_published_as_fully_answered(bill_pdf, monkeypatch):
+    calls = []
+
+    def fake_parse(**kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(id=f"r{len(calls)}", output=[], output_parsed=_final())
+
+    monkeypatch.setattr(llm, "parse", fake_parse)
+    answer = qa.answer_question("How much electricity?", [_doc(bill_pdf)], "improved")
+
+    assert len(calls) == 3
+    assert answer.status == "partial"
+    assert any("E2" in gap and "not found" in gap for gap in answer.gaps)
+    assert not answer.evidence[1].verified
+
+
 def test_scoring_marks(bill_pdf, monkeypatch):
     monkeypatch.setattr(
         llm,

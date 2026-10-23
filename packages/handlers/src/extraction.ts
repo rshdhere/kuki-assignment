@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { AiServiceError, extract as runExtraction } from "@kuki/ai";
 import { config } from "@kuki/config";
 import { db } from "@kuki/drizzle";
@@ -10,7 +11,30 @@ import {
 import { PermanentExtractionError } from "@kuki/handlers/errors";
 import { recordEvent } from "@kuki/handlers/events";
 import type { AiExtraction, ExtractionJob } from "@kuki/types";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
+
+class AttemptFailure extends AiServiceError {
+  constructor(
+    error: unknown,
+    readonly token: string,
+  ) {
+    super(
+      error instanceof Error ? error.message : String(error),
+      error instanceof AiServiceError ? error.retryable : true,
+      error instanceof AiServiceError ? error.status : undefined,
+    );
+    this.cause = error;
+  }
+}
+
+class PermanentAttemptFailure extends PermanentExtractionError {
+  constructor(
+    error: PermanentExtractionError,
+    readonly token: string,
+  ) {
+    super(error.message, { cause: error });
+  }
+}
 
 /**
  * Processes one job from the extraction queue. Throwing leaves the message on
@@ -29,9 +53,16 @@ export async function processExtractionJob(
 ): Promise<boolean> {
   // `extracting` is included so a job whose worker died mid-run can be picked
   // up again, and `failed` so jobs redriven from the DLQ run again.
+  const token = randomUUID();
   const [doc] = await db
     .update(documents)
-    .set({ status: "extracting", attempts: attempt, lastError: null })
+    .set({
+      status: "extracting",
+      attempts: attempt,
+      processingToken: token,
+      lastError: null,
+      completedAt: null,
+    })
     .where(
       and(
         eq(documents.id, job.uploadId),
@@ -50,6 +81,20 @@ export async function processExtractionJob(
     );
     return false;
   }
+  try {
+    return await extractClaimedDocument(doc, attempt, token);
+  } catch (err) {
+    throw err instanceof PermanentExtractionError
+      ? new PermanentAttemptFailure(err, token)
+      : new AttemptFailure(err, token);
+  }
+}
+
+async function extractClaimedDocument(
+  doc: DocumentRow,
+  attempt: number,
+  token: string,
+) {
   await recordEvent(
     db,
     doc.id,
@@ -68,7 +113,16 @@ export async function processExtractionJob(
 
   // Results and the status change land together, and replace any results of
   // an earlier run, so a redelivered job can't leave duplicates or half a run.
-  await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
+    // Hold the row lock until facts, source segments and success commit together.
+    // A new claim either precedes this lock (and fences us out) or follows it
+    // and sees the durable succeeded status, so cannot start another extraction.
+    const [owner] = await tx
+      .select({ token: documents.processingToken, status: documents.status })
+      .from(documents)
+      .where(eq(documents.id, doc.id))
+      .for("update");
+    if (owner?.token !== token || owner.status !== "extracting") return false;
     await tx.delete(facts).where(eq(facts.documentId, doc.id));
     await tx
       .delete(documentSegments)
@@ -111,6 +165,7 @@ export async function processExtractionJob(
       .update(documents)
       .set({
         status: "succeeded",
+        processingToken: null,
         completedAt: new Date(),
         docType: extraction.doc_type,
         title: extraction.title,
@@ -131,8 +186,8 @@ export async function processExtractionJob(
       `${doc.filename} finished with ${extraction.facts.length} facts (${verified} of ${reported} reported facts verified at their source).`,
       attempt,
     );
+    return true;
   });
-  return true;
 }
 
 /**
@@ -147,28 +202,43 @@ export async function recordExtractionFailure(
   const message = error instanceof Error ? error.message : String(error);
   const permanent = error instanceof PermanentExtractionError;
   const final = permanent || attempt >= config.extraction.maxReceives;
-  const [doc] = await db
-    .update(documents)
-    .set({
-      status: final ? "failed" : "retrying",
-      attempts: attempt,
-      lastError: message,
-      completedAt: final ? new Date() : null,
-    })
-    .where(eq(documents.id, uploadId))
-    .returning({ filename: documents.filename });
-  if (!doc) return;
-  await recordEvent(
-    db,
-    uploadId,
-    "extraction_failed",
-    permanent
-      ? `${doc.filename} cannot be processed: ${message}. Not retried.`
-      : final
-        ? `${doc.filename} failed on attempt ${attempt} of ${config.extraction.maxReceives}: ${message}. Moved to the DLQ.`
-        : `${doc.filename} failed on attempt ${attempt} of ${config.extraction.maxReceives}: ${message}.`,
-    attempt,
-  );
+  const token =
+    error instanceof AttemptFailure || error instanceof PermanentAttemptFailure
+      ? error.token
+      : null;
+  return db.transaction(async (tx) => {
+    const [doc] = await tx
+      .update(documents)
+      .set({
+        status: final ? "failed" : "retrying",
+        processingToken: null,
+        attempts: attempt,
+        lastError: message,
+        completedAt: final ? new Date() : null,
+      })
+      .where(
+        and(
+          eq(documents.id, uploadId),
+          eq(documents.status, "extracting"),
+          token
+            ? eq(documents.processingToken, token)
+            : isNull(documents.processingToken),
+        ),
+      )
+      .returning({ filename: documents.filename });
+    if (!doc) return;
+    await recordEvent(
+      tx,
+      uploadId,
+      "extraction_failed",
+      permanent
+        ? `${doc.filename} cannot be processed: ${message}. Not retried.`
+        : final
+          ? `${doc.filename} failed on attempt ${attempt} of ${config.extraction.maxReceives}: ${message}. Moved to the DLQ.`
+          : `${doc.filename} failed on attempt ${attempt} of ${config.extraction.maxReceives}: ${message}.`,
+      attempt,
+    );
+  });
 }
 
 // Postgres `date` columns reject anything but a valid ISO date.

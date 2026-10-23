@@ -15,6 +15,13 @@
       "when": 1792630005023,
       "tag": "0001_extraction_results",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792761915058,
+      "tag": "0002_tough_meltdown",
+      "breakpoints": true
     }
   ]
 }

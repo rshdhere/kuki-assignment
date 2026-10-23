@@ -227,3 +227,88 @@ describe("recordExtractionFailure", () => {
     expect(row?.completedAt).toBeInstanceOf(Date);
   });
 });
+
+describe("overlapping extraction attempts", () => {
+  it("fences duplicate deliveries even when their receive counts are equal", async () => {
+    await seed("queued");
+    const old = Promise.withResolvers<ReturnType<typeof extraction>>();
+    extract
+      .mockReturnValueOnce(old.promise)
+      .mockResolvedValueOnce(extraction({ summary: "new owner" }));
+    const older = processExtractionJob(job, 1);
+    await vi.waitFor(() => expect(extract).toHaveBeenCalledTimes(1));
+    await processExtractionJob(job, 1);
+    old.resolve(extraction({ summary: "stale duplicate" }));
+    expect(await older).toBe(false);
+    expect((await getDoc(id))?.summary).toBe("new owner");
+    expect(
+      await db.select().from(facts).where(eq(facts.documentId, id)),
+    ).toHaveLength(2);
+  });
+
+  it("does not let a late success undo the current owner's permanent failure", async () => {
+    await seed("queued");
+    const old = Promise.withResolvers<ReturnType<typeof extraction>>();
+    extract
+      .mockReturnValueOnce(old.promise)
+      .mockRejectedValueOnce(
+        new AiServiceError("corrupt document", false, 422),
+      );
+    const older = processExtractionJob(job, 1);
+    await vi.waitFor(() => expect(extract).toHaveBeenCalledTimes(1));
+    await processExtractionJob(job, 2).catch((err: unknown) =>
+      recordExtractionFailure(id, 2, err),
+    );
+    old.resolve(extraction());
+    expect(await older).toBe(false);
+    expect(await getDoc(id)).toMatchObject({
+      status: "failed",
+      attempts: 2,
+      lastError: "corrupt document",
+    });
+    expect(
+      await db.select().from(facts).where(eq(facts.documentId, id)),
+    ).toHaveLength(0);
+  });
+
+  it("does not let an older failed attempt undo a newer success", async () => {
+    await seed("queued");
+    const old = Promise.withResolvers<ReturnType<typeof extraction>>();
+    extract
+      .mockReturnValueOnce(old.promise)
+      .mockResolvedValueOnce(extraction());
+    const older = processExtractionJob(job, 1).catch((err: unknown) =>
+      recordExtractionFailure(id, 1, err),
+    );
+    await vi.waitFor(() => expect(extract).toHaveBeenCalledTimes(1));
+    await processExtractionJob(job, 2);
+    expect((await getDoc(id))?.status).toBe("succeeded");
+
+    old.reject(new AiServiceError("old request timed out", true, 503));
+    await older;
+
+    expect(await getDoc(id)).toMatchObject({
+      status: "succeeded",
+      attempts: 2,
+      lastError: null,
+    });
+  });
+
+  it("does not replace newer facts with a late result from an older attempt", async () => {
+    await seed("queued");
+    const old = Promise.withResolvers<ReturnType<typeof extraction>>();
+    extract
+      .mockReturnValueOnce(old.promise)
+      .mockResolvedValueOnce(
+        extraction({ summary: "newer successful extraction" }),
+      );
+    const older = processExtractionJob(job, 1);
+    await vi.waitFor(() => expect(extract).toHaveBeenCalledTimes(1));
+    await processExtractionJob(job, 2);
+
+    old.resolve(extraction({ summary: "obsolete older extraction" }));
+    await older;
+
+    expect((await getDoc(id))?.summary).toBe("newer successful extraction");
+  });
+});

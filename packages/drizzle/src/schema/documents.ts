@@ -64,6 +64,8 @@ export const documents = pgTable(
     duplicateOf: uuid().references((): AnyPgColumn => documents.id),
     /** Extraction attempts so far (the SQS receive count of the latest one). */
     attempts: integer().notNull().default(0),
+    /** Ownership of the latest claim; stale workers cannot publish over it. */
+    processingToken: uuid(),
     lastError: text(),
 
     // Filled in by extraction.
