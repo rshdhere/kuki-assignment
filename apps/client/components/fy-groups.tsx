@@ -211,7 +211,7 @@ export function FyHero({
               Solid: recorded · dashed: no figure
             </span>
           </div>
-          <div className="scroll">
+          <div className="scroll chart-scroll">
             <div style={{ minWidth: 640 }}>
               <div
                 className="bars"

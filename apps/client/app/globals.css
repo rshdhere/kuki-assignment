@@ -1325,6 +1325,24 @@ html {
   opacity: 1;
   transform: translate(-50%, 0);
 }
+/* The scroll box clips overflow, so leave headroom for the tallest bar's label. */
+.chart-scroll {
+  padding-top: 32px;
+}
+/* End bars anchor their label to the outer edge, so it can't run off the side. */
+.bars > i[data-v]:first-child::after {
+  left: 0;
+  transform: translateY(4px);
+}
+.bars > i[data-v]:last-child::after {
+  left: auto;
+  right: 0;
+  transform: translateY(4px);
+}
+.bars > i[data-v]:first-child:hover::after,
+.bars > i[data-v]:last-child:hover::after {
+  transform: none;
+}
 .bar-labels {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -1341,6 +1359,125 @@ html {
 .bar-labels small {
   font: 500 11px var(--mono);
   color: var(--muted);
+}
+
+/* Document periods on one year axis, with the FY as a band behind every row. */
+.ptl {
+  --label: 240px;
+  --gap: 20px;
+  position: relative;
+  padding-bottom: 26px; /* room for the band's label under the rows */
+}
+.ptl-layer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--label) + var(--gap));
+  right: 0;
+  pointer-events: none;
+}
+.ptl-grid {
+  position: absolute;
+  top: 24px;
+  bottom: 26px;
+  width: 1px;
+  background: var(--line);
+}
+.ptl-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 8px;
+  background: rgba(255, 227, 122, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(183, 121, 31, 0.35);
+}
+.ptl-band b {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font: 500 11px var(--mono);
+  color: var(--warn-ink);
+  white-space: nowrap;
+}
+.ptl-axis,
+.ptl-rows > li {
+  display: grid;
+  grid-template-columns: var(--label) minmax(0, 1fr);
+  gap: var(--gap);
+}
+.ptl-axis {
+  height: 24px;
+}
+.ptl-axis > div {
+  position: relative;
+}
+.ptl-axis > div span {
+  position: absolute;
+  top: 4px;
+  padding-left: 6px;
+  font: 500 11px var(--mono);
+  color: var(--muted);
+}
+.ptl-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ptl-rows > li {
+  align-items: center;
+  min-height: 52px;
+  border-top: 1px solid var(--line);
+}
+.ptl-name {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.ptl-name b {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ptl-name small {
+  font-size: 13px;
+  color: var(--muted);
+}
+.ptl-track {
+  position: relative;
+  height: 16px;
+}
+.ptl-track i {
+  position: absolute;
+  top: 0;
+  height: 16px;
+  border-radius: 5px;
+  background: #6b6c6e;
+  transform-origin: left;
+  animation: grow-x 600ms var(--ease-out) both;
+}
+.ptl-track i.in {
+  background: var(--mark);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+@media (max-width: 700px) {
+  .ptl {
+    --label: 130px;
+    --gap: 12px;
+  }
+  /* A narrow band: the label runs left from its right edge instead. */
+  .ptl-band b {
+    left: auto;
+    right: 6px;
+    transform: none;
+  }
+  /* Too narrow for every year: label every other one. */
+  .ptl-axis > div span:nth-child(even) {
+    display: none;
+  }
 }
 
 /* Pass / partial / fail grid on the Evaluation page. */
