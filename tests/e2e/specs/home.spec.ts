@@ -1,7 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-test("documents page renders", async ({ page }) => {
+test("the website opens on the financial year", async ({ page }) => {
   await page.goto("/");
+  await expect(page).toHaveURL(/\/financial-year$/);
+});
+
+test("documents page renders", async ({ page }) => {
+  await page.goto("/documents");
 
   await expect(page.getByRole("main")).toBeVisible();
   await expect(
@@ -51,7 +56,7 @@ test("upload presigns, puts to S3 and queues every file", async ({ page }) => {
     },
   );
 
-  await page.goto("/");
+  await page.goto("/documents");
   const chooser = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: "Upload files" }).click();
   await (await chooser).setFiles([pdf("a.pdf"), pdf("b.pdf"), pdf("c.pdf")]);
@@ -70,17 +75,18 @@ test("upload rejects unsupported files without calling the server", async ({
     return route.abort();
   });
 
-  await page.goto("/");
+  await page.goto("/documents");
   await page.locator("#upload").setInputFiles({
     name: "notes.txt",
     mimeType: "text/plain",
     buffer: Buffer.from("hello"),
   });
 
-  await expect(page.getByRole("status")).toContainText("1 file not uploaded");
-  await expect(page.getByRole("status")).toContainText(
-    "Not a PDF, XLSX or CSV",
-  );
+  const toast = page
+    .getByRole("region", { name: "Notifications" })
+    .getByRole("alert");
+  await expect(toast).toContainText("1 file not uploaded");
+  await expect(toast).toContainText("Not a PDF, XLSX or CSV");
   expect(called).toBe(false);
 });
 
@@ -194,14 +200,14 @@ async function stubApi(page: import("@playwright/test").Page) {
 
 test("sidebar reaches every screen", async ({ page }) => {
   await stubApi(page);
-  await page.goto("/");
+  await page.goto("/documents");
   const nav = page.getByRole("navigation", { name: "Workspace" });
 
   for (const [label, heading] of [
-    ["Facts found", "Adani commercial electricity bill"],
-    ["Ask a question", "Ask a question"],
-    ["Financial year", "Financial year 2024-25"],
-    ["Accuracy", "Accuracy"],
+    ["Extracted facts", "Adani commercial electricity bill"],
+    ["Ask", "Ask"],
+    ["Financial year", "FY 2024-25"],
+    ["Evaluation", "Evaluation"],
   ] as const) {
     await nav.getByRole("link", { name: label }).click();
     await expect(nav.getByRole("link", { name: label })).toHaveAttribute(
@@ -220,7 +226,7 @@ test("documents table shows processed documents from the server", async ({
   page,
 }) => {
   await stubApi(page);
-  await page.goto("/");
+  await page.goto("/documents");
   const table = page.getByRole("region", { name: "Your documents" });
 
   await expect(
@@ -245,7 +251,7 @@ test("picking a fact shows its source; a calculated fact shows its derivation", 
 
   await expect(source.locator("mark")).toHaveText("Units Consumed 47407");
 
-  await page.getByRole("button", { name: "Worked out by KuKi" }).click();
+  await page.getByRole("button", { name: "Calculated", exact: true }).click();
   await page.getByRole("button", { name: "Units Consumed per day" }).click();
   await expect(source).toContainText("KuKi worked it out: 47407 ÷ 30 days");
 });
@@ -294,13 +300,12 @@ test("asking a question shows the answer with checked evidence", async ({
   await page.goto("/ask");
 
   await page.getByLabel("Your question").fill("How much electricity?");
-  await page.getByRole("button", { name: "Ask", exact: true }).click();
+  await page.getByRole("button", { name: "Get answer" }).click();
 
   const answer = page.getByRole("article", { name: "Answer" });
   await expect(answer).toContainText("47,407 kWh in April 2024");
-  await expect(answer).toContainText(
-    "Page 1 of Adani commercial electricity bill",
-  );
+  await expect(answer).toContainText("Adani commercial electricity bill");
+  await expect(answer).toContainText("Page 1");
   await expect(answer.getByText("“Units Consumed 47407”")).toBeVisible();
   await expect(answer.getByText("Found", { exact: true })).toBeVisible();
 });

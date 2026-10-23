@@ -4,7 +4,7 @@ import { Fragment, type ReactNode } from "react";
 import { CopyAnswer } from "@/components/copy-answer";
 import { FyGroups } from "@/components/fy-groups";
 import { Icon } from "@/components/icon";
-import { Badge, OriginBadge } from "@/components/ui";
+import { Badge, OriginBadge, Verdict } from "@/components/ui";
 import { docName, num, placeText, statusLabel } from "@/lib/format";
 
 /** Turns "[E1]" references in the answer into links to the numbered sources. */
@@ -19,11 +19,24 @@ function withCitations(text: string, ids: Set<string>): ReactNode[] {
         href={`#src-${id}`}
         aria-label={`Source ${id.slice(1)}`}
       >
-        {id.slice(1)}
+        [{id.slice(1)}]
       </a>
     );
   });
 }
+
+/** The first sentence becomes the headline when the answer runs long. */
+function splitLead(text: string): [string, string] {
+  const m = /^(.{20,220}?[.?!])(\s+[\s\S]+)$/.exec(text.trim());
+  return m && text.length > 160 ? [m[1]!, m[2]!.trim()] : [text.trim(), ""];
+}
+
+const TONE: Record<string, "ok" | "warn"> = {
+  answered: "ok",
+  partial: "warn",
+  conflicting_evidence: "warn",
+  insufficient_evidence: "warn",
+};
 
 export function AnswerCard({
   record,
@@ -37,140 +50,82 @@ export function AnswerCard({
   const used = record.documentIds.filter((id) =>
     documents.some((d) => d.id === id),
   ).length;
-  const ok = a.status === "answered";
+  const docCount = used || record.documentIds.length;
+  const allFound = a.evidence.length > 0 && a.evidence.every((e) => e.verified);
+  const allMatch =
+    a.calculations.length > 0 && a.calculations.every((c) => c.matches);
+  const [lead, body] = splitLead(a.answer);
 
   return (
-    <article className="card pad" aria-label="Answer" style={{ gap: 18 }}>
-      <div className="card-head" style={{ alignItems: "flex-start" }}>
-        <div style={{ minWidth: 0 }}>
-          <div className="muted" style={{ fontSize: 13 }}>
-            You asked
-          </div>
-          <h2 className="section-h" style={{ fontSize: 16 }}>
-            {record.question}
-          </h2>
+    <article aria-label="Answer" className="stack" style={{ gap: 24 }}>
+      <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <Badge kind={TONE[a.status] ?? "default"}>
+            {statusLabel(a.status)}
+          </Badge>
+          <span className="muted" style={{ fontSize: 14, flex: 1 }}>
+            {[
+              `${a.evidence.length} source${a.evidence.length === 1 ? "" : "s"}`,
+              allFound && "all quotes found at source",
+              allMatch && "calculations re-run",
+              `${docCount} document${docCount === 1 ? "" : "s"} searched`,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
+          <CopyAnswer text={a.answer} />
         </div>
-        <Badge kind={ok ? "default" : "warn"}>
-          <Icon
-            name={ok ? "check" : "alert"}
-            size={12}
-            color={ok ? "var(--ok)" : undefined}
-          />
-          {statusLabel(a.status)}
-        </Badge>
-      </div>
+        <p className="muted" style={{ fontSize: 15 }}>
+          {record.question}
+        </p>
+        <h2 className="answer-lead">{withCitations(lead, evidenceIds)}</h2>
+        {body && (
+          <p className="answer-body">{withCitations(body, evidenceIds)}</p>
+        )}
+      </section>
 
-      <p
-        style={{
-          color: "var(--text-2)",
-          fontSize: 15,
-          lineHeight: 1.6,
-          whiteSpace: "pre-wrap",
-        }}
-      >
-        {withCitations(a.answer, evidenceIds)}
-      </p>
-
-      {a.key_values.length > 0 && (
-        <section aria-label="Key figures" className="stack" style={{ gap: 8 }}>
-          <h3 className="section-h">Key figures</h3>
-          <div className="card" style={{ boxShadow: "none" }}>
-            <table className="tbl tbl-fixed">
-              <colgroup>
-                <col style={{ width: "38%" }} />
-                <col style={{ width: "24%" }} />
-                <col style={{ width: "38%" }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>Figure</th>
-                  <th className="r">Value</th>
-                  <th>Where it comes from</th>
-                </tr>
-              </thead>
-              <tbody>
-                {a.key_values.map((kv, i) => (
-                  <tr key={`${kv.label}-${i}`}>
-                    <td>
-                      {kv.label}
-                      {kv.period && (
-                        <div className="muted" style={{ fontSize: 12 }}>
-                          {kv.period}
-                        </div>
-                      )}
-                    </td>
-                    <td className="r num" style={{ fontWeight: 600 }}>
-                      {kv.value_text}
-                    </td>
-                    <td>
-                      <OriginBadge origin={kv.origin} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      {a.gaps.length > 0 && (
+        <section
+          className="card pad"
+          aria-label="Not concluded"
+          style={{ gap: 8 }}
+        >
+          <h3 className="section-h">Not concluded</h3>
+          <ul
+            style={{
+              margin: 0,
+              paddingLeft: 18,
+              fontSize: 15,
+              lineHeight: 1.5,
+            }}
+          >
+            {a.gaps.map((g) => (
+              <li key={g}>{g}</li>
+            ))}
+          </ul>
         </section>
       )}
 
-      {a.calculations.length > 0 && (
-        <details className="disc">
-          <summary>
-            <Icon name="chevron-right" size={14} />
-            How it was worked out
-          </summary>
-          <ol
-            style={{
-              margin: "12px 0 0",
-              paddingLeft: 20,
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-              fontSize: 13,
-            }}
-          >
-            {a.calculations.map((c) => (
-              <li key={c.id}>
-                <div>{c.description}</div>
-                <div
-                  className="num"
-                  style={{ fontWeight: 600, overflowWrap: "anywhere" }}
-                >
-                  {c.expression} = {num(c.computed ?? c.result)}
-                  {c.unit ? ` ${c.unit}` : ""}
-                </div>
-                <span className="status muted" style={{ fontSize: 12 }}>
-                  <Icon
-                    name={c.matches ? "check" : "alert"}
-                    size={12}
-                    color={c.matches ? "var(--ok)" : "var(--warn)"}
-                  />
-                  {c.matches
-                    ? "Checked by KuKi"
-                    : "KuKi got a different result; check this step"}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </details>
-      )}
-
-      {a.financial_year && (
-        <details className="disc">
-          <summary>
-            <Icon name="chevron-right" size={14} />
-            Financial year {a.financial_year.fy.replace(/^FY /, "")} totals used
-          </summary>
-          <div style={{ marginTop: 12 }}>
-            <FyGroups summary={a.financial_year} compact />
-          </div>
-        </details>
-      )}
-
       {a.evidence.length > 0 && (
-        <section aria-label="Sources" className="stack" style={{ gap: 8 }}>
-          <h3 className="section-h">Sources</h3>
-          <div className="card" style={{ boxShadow: "none" }}>
+        <section
+          className="card"
+          aria-label="Sources"
+          style={{ overflow: "hidden" }}
+        >
+          <div className="card-head" style={{ padding: "16px 20px" }}>
+            <h3 className="section-h">Sources</h3>
+            <span className="muted" style={{ fontSize: 13 }}>
+              Open one to see the document&apos;s facts
+            </span>
+          </div>
+          <div className="bt">
             {a.evidence.map((e) => (
               <Link
                 key={e.id}
@@ -188,17 +143,19 @@ export function AnswerCard({
                     gap: 2,
                   }}
                 >
-                  <span style={{ fontSize: 13, fontWeight: 500 }}>
-                    {placeText({
-                      page: e.page,
-                      sheet: e.sheet,
-                      cell_range: e.cell_range,
-                    })}{" "}
-                    of {docName(e.filename)}
+                  <span style={{ fontSize: 15 }}>
+                    {docName(e.filename)}{" "}
+                    <span className="mono muted">
+                      {placeText({
+                        page: e.page,
+                        sheet: e.sheet,
+                        cell_range: e.cell_range,
+                      })}
+                    </span>
                   </span>
                   <span
                     className="muted"
-                    style={{ fontSize: 12, overflowWrap: "anywhere" }}
+                    style={{ fontSize: 14, overflowWrap: "anywhere" }}
                   >
                     “
                     {e.quote.length > 220
@@ -207,49 +164,116 @@ export function AnswerCard({
                     ”
                   </span>
                 </span>
-                <span
-                  className="status"
-                  style={{
-                    fontSize: 12,
-                    color: e.verified ? "var(--ok-ink)" : "var(--warn-ink)",
-                  }}
-                >
-                  <Icon
-                    name={e.verified ? "check-circle" : "alert"}
-                    size={14}
-                  />
+                <Verdict ok={e.verified}>
                   {e.verified ? "Found" : "Not confirmed"}
-                </span>
+                </Verdict>
               </Link>
             ))}
           </div>
         </section>
       )}
 
-      {a.gaps.length > 0 && (
-        <section aria-label="Good to know" role="note" className="note">
-          <Icon name="info" style={{ flex: "none", marginTop: 2 }} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div className="strong">Good to know</div>
-            <ul
-              style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}
-              className="muted"
-            >
-              {a.gaps.map((g) => (
-                <li key={g}>{g}</li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
+      <div className="grid-2">
+        {a.key_values.length > 0 && (
+          <section
+            className="card"
+            aria-label="Key figures"
+            style={{ overflow: "hidden" }}
+          >
+            <div style={{ padding: "16px 20px" }}>
+              <h3 className="section-h">Key figures</h3>
+            </div>
+            <table className="tbl tbl-fixed">
+              <colgroup>
+                <col style={{ width: "44%" }} />
+                <col style={{ width: "30%" }} />
+                <col style={{ width: "26%" }} />
+              </colgroup>
+              <tbody>
+                {a.key_values.map((kv, i) => (
+                  <tr key={`${kv.label}-${i}`}>
+                    <td>
+                      {kv.label}
+                      {kv.period && (
+                        <div className="muted" style={{ fontSize: 13 }}>
+                          {kv.period}
+                        </div>
+                      )}
+                    </td>
+                    <td className="r num" style={{ fontWeight: 600 }}>
+                      {kv.value_text}
+                    </td>
+                    <td className="r">
+                      <OriginBadge origin={kv.origin} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
 
-      <div className="card-head muted" style={{ fontSize: 13 }}>
-        <span>
-          Based on {used || record.documentIds.length} document
-          {(used || record.documentIds.length) === 1 ? "" : "s"}
-        </span>
-        <CopyAnswer text={a.answer} />
+        {a.calculations.length > 0 && (
+          <section
+            className="card"
+            aria-label="How it was calculated"
+            style={{ overflow: "hidden" }}
+          >
+            <div className="card-head" style={{ padding: "16px 20px" }}>
+              <h3 className="section-h">How it was calculated</h3>
+              <span className="muted" style={{ fontSize: 13 }}>
+                Re-run in code
+              </span>
+            </div>
+            {a.calculations.map((c) => (
+              <div
+                key={c.id}
+                className="bt"
+                style={{
+                  padding: "12px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                  fontSize: 14,
+                }}
+              >
+                <span>{c.description}</span>
+                <span
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    flexWrap: "wrap",
+                    alignItems: "baseline",
+                  }}
+                >
+                  <span
+                    className="mono"
+                    style={{ flex: 1, overflowWrap: "anywhere" }}
+                  >
+                    {c.expression} = {num(c.computed ?? c.result)}
+                    {c.unit ? ` ${c.unit}` : ""}
+                  </span>
+                  <Verdict ok={c.matches}>
+                    {c.matches ? "Matches" : "Differs, check this step"}
+                  </Verdict>
+                </span>
+              </div>
+            ))}
+          </section>
+        )}
       </div>
+
+      {a.financial_year && (
+        <details className="disc">
+          <summary>
+            <Icon name="chevron-right" size={14} />
+            Financial year {a.financial_year.fy.replace(/^FY /, "")} totals used
+          </summary>
+          <div style={{ marginTop: 12 }}>
+            <FyGroups summary={a.financial_year} compact />
+          </div>
+        </details>
+      )}
     </article>
   );
 }

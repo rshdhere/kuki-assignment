@@ -26,25 +26,13 @@ export function UploadDropzone() {
       }}
     >
       <span className="drop-icon">
-        <Icon name="upload" size={18} color="var(--emerald)" />
+        <Icon name="arrow-up" size={20} color="var(--ink)" />
       </span>
-      <span
-        style={{
-          flex: "1 1 260px",
-          minWidth: 0,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <span style={{ fontWeight: 500 }}>
-          Drop files here, or browse to upload
-        </span>
-        <span className="muted" style={{ fontSize: 13 }}>
-          PDF, Excel (.xlsx) or CSV, up to 25 MB each. You can add several at
-          once.
-        </span>
+      <b style={{ fontWeight: 600 }}>Drop files here</b>
+      <span className="muted" style={{ fontSize: 14 }}>
+        PDF, XLSX or CSV, up to 25 MB each. Files already in KuKi are skipped.
       </span>
-      <span className="btn btn-outline">Browse files</span>
+      <span className="btn btn-sm">Browse files</span>
       <input
         id="upload"
         type="file"
