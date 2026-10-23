@@ -62,6 +62,12 @@ The 13 cases, the scoring, the saved baseline and improved runs, the weakness th
 
 [![Swagger UI showing the KuKi Evidence API uploads and documents endpoints](docs/swagger-uploads-documents.png)](https://kuki-assignment.vercel.app/docs/)
 
+## Architecture
+
+[![KuKi architecture: the dashboard uploads to S3 and calls the Express API; the API queues jobs on SQS for the worker, which calls the FastAPI AI service; the AI service reads files from S3, calls OpenAI, and results are stored in Postgres](docs/architecture.png)](https://excalidraw.com/#json=kJGpC1FWlSz-f_mnFilPS,MNsohFFPIrbY_NnBFaH5Nw)
+
+Upload → S3 → confirm → SQS → worker → AI service → verified facts in Postgres → dashboard and Ask. Click the diagram to open the editable version ([source](docs/architecture.excalidraw)).
+
 ## Why S3 and SQS
 
 **S3 holds the original files.** The API never handles file bytes: it hands the browser a presigned PUT and the file goes straight to S3. That keeps uploads off the serverless API, whose request bodies are capped at a few megabytes on Vercel, while a scanned PDF can be far larger. Each presigned URL signs the file's size, type and SHA-256, so S3 itself rejects an upload that doesn't match what was approved. Files are stored with eleven nines of durability, encrypted at rest and private, and they stay the source of truth: any document can be re-extracted later with a better model without asking anyone to upload it again.
