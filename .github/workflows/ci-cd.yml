@@ -67,7 +67,7 @@ jobs:
         run: bun run test -- --force
 
   e2e:
-    name: Playwright
+    name: e2e tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -88,7 +88,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-results
+          name: e2e-test-results
           path: tests/e2e/test-results/
           retention-days: 7
           if-no-files-found: ignore
