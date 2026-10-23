@@ -1616,14 +1616,174 @@ html {
   max-width: 900px;
   white-space: pre-wrap;
 }
-.runstrip {
+/* Once a question is asked the page becomes a thread: question, working, answer. */
+.thread {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px 20px;
+  gap: 40px;
+}
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scroll-margin-top: 24px;
+  animation: turn-in var(--d4) var(--ease-out) both;
+}
+.turn-q {
+  align-self: flex-end;
+  max-width: min(640px, 85%);
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 18px 18px 4px 18px;
+  background: var(--dark);
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.turn-a {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  min-width: 0;
+}
+.turn-avatar .logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+}
+.turn-answer {
+  animation: turn-in var(--d4) var(--ease-out) both;
+}
+.think {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 18px;
   border: 1px solid var(--hi);
   border-radius: var(--r-lg);
   background: var(--soft);
+}
+.think-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+}
+.think-done {
+  align-self: flex-start;
+  padding: 8px 14px;
+  gap: 0;
+  background: transparent;
+  font-size: 14px;
+  color: var(--muted);
+}
+.think-done summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.think-done summary::-webkit-details-marker {
+  display: none;
+}
+.think-done summary svg {
+  transition: transform var(--d2) var(--ease-out);
+}
+.think-done[open] summary svg {
+  transform: rotate(90deg);
+}
+.think-done[open] .think-steps {
+  margin-top: 10px;
+}
+.think-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+.think-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: turn-in var(--d3) var(--ease-out) both;
+}
+.think-steps li.done {
+  color: var(--muted);
+}
+.think-dot {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+.done .think-dot {
+  background: var(--ok-soft);
+  color: var(--ok-ink);
+}
+.active .think-dot > i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--calc);
+  animation: breathe 1.2s var(--ease-io) infinite;
+}
+/* Text that is still being worked on gets a slow light sweep. */
+.shimmer {
+  background: linear-gradient(
+      100deg,
+      var(--ink) 40%,
+      rgba(22, 22, 22, 0.35) 50%,
+      var(--ink) 60%
+    )
+    0 0 / 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 2.2s linear infinite;
+}
+/* The thread fills the window so the composer rests at the bottom even when
+   the conversation is short, and sticks there once it grows past the fold. */
+.page-thread {
+  flex: 1;
+}
+.page-thread > .split {
+  flex: 1;
+  align-items: stretch;
+}
+.page-thread > .split > .sticky {
+  align-self: start;
+}
+.page-thread .thread {
+  flex: 1;
+}
+.dock {
+  position: sticky;
+  bottom: 16px;
+  z-index: 5;
+  padding: 10px;
+  margin: auto -10px 0;
+  border-radius: 22px;
+  background: rgba(184, 185, 187, 0.72);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.dock .composer {
+  padding-left: 18px;
+  box-shadow: var(--shadow-3);
+}
+.dock .composer textarea {
+  font-size: 16px;
+}
+.send {
+  width: 44px;
+  padding: 0;
+  border-radius: 50%;
 }
 .chips {
   display: flex;
@@ -1880,6 +2040,26 @@ html {
     transform: scaleX(0);
   }
 }
+@keyframes turn-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes breathe {
+  50% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
 @keyframes pop {
   from {
     transform: scale(0.6);
@@ -1904,6 +2084,13 @@ html {
   }
   .sticky {
     position: static;
+  }
+  /* The rail drops below the thread, so size the thread to the window instead. */
+  .page-thread > .split {
+    align-content: start;
+  }
+  .page-thread .thread {
+    min-height: calc(100dvh - 48px);
   }
 }
 /* The sidebar becomes a drawer opened from the top bar. */
@@ -1976,6 +2163,18 @@ html {
   }
   .src > :last-child {
     margin-left: 38px;
+  }
+  .turn-a {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .turn-a > .stack {
+    width: 100%;
+  }
+  .turn-avatar .logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
   }
   .topbar .actions {
     width: 100%;

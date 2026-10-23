@@ -1,9 +1,11 @@
 "use client";
 
 import type { AnswerRecord } from "@kuki/types";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnswerCard } from "@/components/answer-card";
 import { Icon } from "@/components/icon";
+import { Logo } from "@/components/logo";
+import { Thinking } from "@/components/thinking";
 import { Topbar } from "@/components/topbar";
 import { PageHeading } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -33,6 +35,19 @@ const when = (iso: string) =>
     minute: "2-digit",
   });
 
+// Read in event handlers only; the compiler can't tell submit isn't called in render.
+const clock = () => Date.now();
+
+type Turn = {
+  key: number;
+  question: string;
+  docs: number;
+  startedAt: number;
+  tookMs?: number;
+  record: AnswerRecord | null;
+  error: string | null;
+};
+
 export function AskView() {
   const docs = usePoll(api.documents);
   const earlier = usePoll(api.answers);
@@ -43,12 +58,13 @@ export function AskView() {
   // null means every ready document.
   const [scope, setScope] = useState<Set<string> | null>(null);
   const [question, setQuestion] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [shown, setShown] = useState<AnswerRecord | null>(null);
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [allEarlier, setAllEarlier] = useState(false);
   const earlierList = earlier.data ?? [];
   const earlierShown = allEarlier ? earlierList : earlierList.slice(0, 6);
+  const busy = turns.some((t) => t.tookMs === undefined);
+  const latest = useRef<HTMLDivElement>(null);
+  const shownId = turns.length === 1 ? turns[0]!.record?.id : undefined;
 
   const selected = scope ?? new Set(ready.map((d) => d.id));
   const toggle = (id: string) => {
@@ -58,35 +74,128 @@ export function AskView() {
     setScope(next);
   };
 
+  // Bring each new question to the top of the view as it is asked.
+  const lastKey = turns.at(-1)?.key;
+  useEffect(() => {
+    latest.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [lastKey]);
+
+  const patch = (key: number, next: Partial<Turn>) =>
+    setTurns((ts) => ts.map((t) => (t.key === key ? { ...t, ...next } : t)));
+
   const submit = async (e?: FormEvent, text = question) => {
     e?.preventDefault();
-    if (!text.trim() || busy || selected.size === 0) return;
-    setBusy(true);
-    setError(null);
-    setQuestion(text);
-    setShown(null);
+    const q = text.trim();
+    if (!q || busy || selected.size === 0) return;
+    const startedAt = clock();
+    const key = startedAt;
+    setQuestion("");
+    setTurns((ts) => [
+      ...ts,
+      {
+        key,
+        question: q,
+        docs: selected.size,
+        startedAt,
+        record: null,
+        error: null,
+      },
+    ]);
     try {
-      setShown(await api.ask(text.trim(), scope === null ? [] : [...scope]));
+      const record = await api.ask(q, scope === null ? [] : [...scope]);
+      patch(key, { record, tookMs: clock() - startedAt });
       void earlier.refresh();
     } catch {
-      setError("KuKi couldn't answer just now. Try again in a moment.");
-    } finally {
-      setBusy(false);
+      patch(key, {
+        error: "KuKi couldn't answer just now. Try again in a moment.",
+        tookMs: clock() - startedAt,
+      });
     }
   };
 
-  const startOver = () => {
-    setShown(null);
-    setQuestion("");
-    setError(null);
+  const retry = (t: Turn) => {
+    setTurns((ts) => ts.filter((x) => x.key !== t.key));
+    void submit(undefined, t.question);
   };
+
+  const startOver = () => {
+    setTurns([]);
+    setQuestion("");
+  };
+
+  const composer = (
+    <form
+      onSubmit={(e) => void submit(e)}
+      className={turns.length ? "dock" : undefined}
+      style={{ display: "flex", flexDirection: "column", gap: 10 }}
+    >
+      <div className="composer">
+        {turns.length === 0 && (
+          <Icon
+            name="search"
+            size={20}
+            style={{ flex: "none", alignSelf: "center" }}
+          />
+        )}
+        <label htmlFor="ask" className="sr">
+          Your question
+        </label>
+        <textarea
+          id="ask"
+          rows={1}
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void submit();
+            }
+          }}
+          placeholder={
+            turns.length
+              ? "Ask another question"
+              : "How much water was used in December 2025?"
+          }
+        />
+        {turns.length ? (
+          <button
+            type="submit"
+            className="btn btn-primary send"
+            aria-label={busy ? "Working on the answer" : "Send question"}
+            disabled={busy || !question.trim() || selected.size === 0}
+          >
+            {busy ? (
+              <Icon name="loader" size={18} className="spin" />
+            ) : (
+              <Icon name="arrow-up" size={18} />
+            )}
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={!question.trim() || selected.size === 0}
+          >
+            Get answer
+          </button>
+        )}
+      </div>
+      <span className="muted" style={{ fontSize: 13, paddingLeft: 4 }}>
+        Looking in {selected.size} of {ready.length} processed document
+        {ready.length === 1 ? "" : "s"}
+        {pending > 0 && ` · ${pending} still processing`}
+        {turns.length > 0 && " · each question is answered on its own"}
+      </span>
+    </form>
+  );
 
   return (
     <>
       <Topbar
         crumbs={[{ label: "Ask" }]}
         actions={
-          shown && (
+          turns.length > 0 &&
+          !busy && (
             <button type="button" className="btn" onClick={startOver}>
               <Icon name="plus" />
               New question
@@ -94,100 +203,90 @@ export function AskView() {
           )
         }
       />
-      <main className="page">
-        {!shown && !busy && (
-          <PageHeading
-            title="Ask"
-            lede="Ask about usage, amounts, policies or a financial year. Every answer shows where in your documents it comes from."
-          />
-        )}
-
-        <form
-          onSubmit={(e) => void submit(e)}
-          style={{ display: "flex", flexDirection: "column", gap: 12 }}
-        >
-          <div className="composer">
-            <Icon
-              name="search"
-              size={20}
-              style={{ flex: "none", alignSelf: "center" }}
+      <main className={turns.length ? "page page-thread" : "page"}>
+        {turns.length === 0 && (
+          <>
+            <PageHeading
+              title="Ask"
+              lede="Ask about usage, amounts, policies or a financial year. Every answer shows where in your documents it comes from."
             />
-            <label htmlFor="ask" className="sr">
-              Your question
-            </label>
-            <textarea
-              id="ask"
-              rows={1}
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void submit();
-                }
-              }}
-              placeholder="How much water was used in December 2025?"
-            />
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={busy || !question.trim() || selected.size === 0}
-            >
-              {busy ? "Reading…" : "Get answer"}
-            </button>
-          </div>
-          <span className="muted" style={{ fontSize: 14 }}>
-            Looking in {selected.size} of {ready.length} processed document
-            {ready.length === 1 ? "" : "s"}
-            {pending > 0 && ` · ${pending} still processing`}
-          </span>
-        </form>
-
-        {busy && (
-          <div className="runstrip" role="status">
-            <span className="strong">
-              Reading {selected.size} document
-              {selected.size === 1 ? "" : "s"}. This usually takes 10 to 60
-              seconds.
-            </span>
-            <div className="bar indet">
-              <i />
-            </div>
-          </div>
-        )}
-        {error && (
-          <div role="alert" className="alert">
-            <Icon
-              name="alert"
-              color="var(--warn-ink)"
-              style={{ flex: "none", marginTop: 3 }}
-            />
-            <div className="alert-body">{error}</div>
-          </div>
+            {composer}
+          </>
         )}
 
         <div className="split">
           <div className="stack">
-            {shown ? (
-              <AnswerCard record={shown} documents={all} />
+            {turns.length === 0 ? (
+              <section className="card pad" aria-label="Example questions">
+                <h2 className="section-h">Try one of these</h2>
+                <div className="chips">
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className="chip"
+                      onClick={() => void submit(undefined, s)}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </section>
             ) : (
-              !busy && (
-                <section className="card pad" aria-label="Example questions">
-                  <h2 className="section-h">Try one of these</h2>
-                  <div className="chips">
-                    {SUGGESTIONS.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        className="chip"
-                        onClick={() => void submit(undefined, s)}
-                      >
-                        {s}
-                      </button>
-                    ))}
+              <div className="thread">
+                {turns.map((t, i) => (
+                  <div
+                    key={t.key}
+                    ref={i === turns.length - 1 ? latest : undefined}
+                    className="turn"
+                  >
+                    <p className="turn-q">{t.question}</p>
+                    <div className="turn-a">
+                      <span className="turn-avatar">
+                        <Logo size={22} />
+                      </span>
+                      <div className="stack" style={{ flex: 1, gap: 16 }}>
+                        {t.startedAt > 0 && (
+                          <Thinking
+                            docs={t.docs}
+                            startedAt={t.startedAt}
+                            tookMs={t.tookMs}
+                          />
+                        )}
+                        {t.error && (
+                          <div role="alert" className="alert">
+                            <Icon
+                              name="alert"
+                              color="var(--warn-ink)"
+                              style={{ flex: "none", marginTop: 3 }}
+                            />
+                            <div className="alert-body">{t.error}</div>
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              style={{ marginLeft: "auto" }}
+                              disabled={busy}
+                              onClick={() => retry(t)}
+                            >
+                              Try again
+                            </button>
+                          </div>
+                        )}
+                        {t.record && (
+                          <div className="turn-answer">
+                            <AnswerCard
+                              record={t.record}
+                              documents={all}
+                              hideQuestion
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </section>
-              )
+                ))}
+                {composer}
+              </div>
             )}
           </div>
 
@@ -249,12 +348,21 @@ export function AskView() {
                   <button
                     key={a.id}
                     type="button"
-                    aria-current={shown?.id === a.id ? "true" : undefined}
-                    onClick={() => {
-                      setShown(a);
-                      setQuestion(a.question);
-                      setError(null);
-                    }}
+                    aria-current={shownId === a.id ? "true" : undefined}
+                    disabled={busy}
+                    onClick={() =>
+                      setTurns([
+                        {
+                          key: Date.now(),
+                          question: a.question,
+                          docs: a.documentIds.length,
+                          startedAt: 0,
+                          tookMs: 0,
+                          record: a,
+                          error: null,
+                        },
+                      ])
+                    }
                   >
                     <span className="row-title">{a.question}</span>
                     <span

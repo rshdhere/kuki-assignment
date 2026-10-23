@@ -10,6 +10,24 @@ Upload sustainability documents (bills, spreadsheets, waste records, policies), 
 
 **Try it without installing anything:** [kuki-assignment.vercel.app](https://kuki-assignment.vercel.app) (the six assignment documents are already loaded).
 
+## Ask (`/ask`)
+
+Ask questions across your processed documents, or select just the documents you want searched. Each answer links back to the supporting pages or spreadsheet cells, shows calculations and evidence checks, and calls out missing information or conflicting sources. Questions are answered independently, and saved answers let you revisit earlier results.
+
+For example, asking whether a spreadsheet's monthly values agree with its annual totals identifies the mismatched sums and the separate conflict between the Monthly and Quarterly Summary sheets, rather than choosing one total as authoritative.
+
+![Ask showing a cited answer about conflicting spreadsheet totals, documents searched and saved answers](docs/ask.png)
+
+## Evaluations (`/evaluation`)
+
+The Evaluation page compares saved baseline and improved runs on **13 questions with expected answers worked out by hand** from the assignment documents. Cases cover bill amounts and consumption, meter arithmetic, waste totals, conflicting workbook totals, policy gaps and financial-year coverage. Select a result cell to inspect the question and its results.
+
+Each case is checked for **answer correctness, supporting evidence, calculation correctness and stated gaps**, where applicable. A pass earns 1 point and a partial result earns ½ point. The saved comparison improves from **11.5/13 to 13/13**: E09, E10 and E11 move from partial to pass, with no case-level regressions. Evidence support rises from **10/13 to 13/13** after adding cell-by-cell spreadsheet verification and line-by-line matching for two-column pages; the baseline already answered all 13 questions correctly.
+
+![Evaluation dashboard comparing baseline and improved scores, case results and the four checks](docs/evaluation.png)
+
+These results describe the saved 13-case comparison, not a guarantee for every document. Citation ranges can still be too broad, and the suite does not cover all scanned-page or larger-document scenarios. See the [detailed results and limitations](apps/ai/README.md#eval-results-baseline--improved), [Harbor evaluation workflow](apps/ai/evals/harbor/README.md), and [local evaluation commands](#run-the-evals).
+
 ## Run it locally
 
 You need **Docker**, **[Bun](https://bun.sh)**, **[uv](https://docs.astral.sh/uv/)**, **Node 24+**, an **OpenAI API key**, and the **[AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)** signed in to an AWS account (`aws configure`). The setup script checks for each one and tells you how to install anything missing.

@@ -41,9 +41,12 @@ const TONE: Record<string, "ok" | "warn"> = {
 export function AnswerCard({
   record,
   documents,
+  hideQuestion = false,
 }: {
   record: AnswerRecord;
   documents: DocumentSummary[];
+  /** Set when the question is already on screen, as in the ask thread. */
+  hideQuestion?: boolean;
 }) {
   const a = record.answer;
   const evidenceIds = new Set(a.evidence.map((e) => e.id));
@@ -82,9 +85,11 @@ export function AnswerCard({
           </span>
           <CopyAnswer text={a.answer} />
         </div>
-        <p className="muted" style={{ fontSize: 15 }}>
-          {record.question}
-        </p>
+        {!hideQuestion && (
+          <p className="muted" style={{ fontSize: 15 }}>
+            {record.question}
+          </p>
+        )}
         <h2 className="answer-lead">{withCitations(lead, evidenceIds)}</h2>
         {body && (
           <p className="answer-body">{withCitations(body, evidenceIds)}</p>
