@@ -18,6 +18,7 @@ from kuki_ai import fy as fy_mod
 from kuki_ai import llm
 from kuki_ai.config import APP_DIR, settings
 from kuki_ai.extraction import extract_document
+from kuki_ai.monthly import split_listed
 from kuki_ai.parsing import UnsupportedDocumentError
 from kuki_ai.qa import answer_question
 from kuki_ai.schemas import Answer, DocumentContext, Extraction, FinancialYearSummary
@@ -68,6 +69,11 @@ class FinancialYearRequest(BaseModel):
     documents: list[DocumentContext]
 
 
+def _repaired(documents: list[DocumentContext]) -> list[DocumentContext]:
+    """Stored documents with any listed monthly column split into months (see monthly.py)."""
+    return [d.model_copy(update={"facts": split_listed(d.facts, d.segments)}) for d in documents]
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "model": settings.openai_model}
@@ -92,7 +98,7 @@ def extract(req: ExtractRequest) -> Extraction:
 def ask(req: AskRequest) -> Answer:
     if not req.question.strip():
         raise HTTPException(400, "question is empty")
-    return answer_question(req.question, req.documents, req.pipeline)
+    return answer_question(req.question, _repaired(req.documents), req.pipeline)
 
 
 @app.post("/financial-year", response_model=FinancialYearSummary)
@@ -100,7 +106,7 @@ def financial_year(req: FinancialYearRequest) -> FinancialYearSummary:
     year = fy_mod.parse_fy(req.fy)
     if not year:
         raise HTTPException(400, f"Not an Indian financial year: {req.fy!r}")
-    return fy_mod.summarise(req.documents, year, req.metric)
+    return fy_mod.summarise(_repaired(req.documents), year, req.metric)
 
 
 def _load(path: Path):
