@@ -1,10 +1,6 @@
 # KuKi Evidence Dashboard
 
-## Design
-
-Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/mGmLPlKGNmLxhDSSjATCYs/KuKi-%E2%80%94-Dashboard?node-id=0-1&t=3zGa5UCzS8nvLtiX-1)
-
-[![Figma screens: Documents, Extracted facts, Ask, Financial year and Evaluation](docs/figma-screens.png)](https://www.figma.com/design/mGmLPlKGNmLxhDSSjATCYs/KuKi-%E2%80%94-Dashboard?node-id=0-1&t=3zGa5UCzS8nvLtiX-1)
+![Walkthrough of the KuKi evidence dashboard](docs/introduction.gif)
 
 ## API documentation
 
@@ -48,3 +44,9 @@ repository root. Run the same command before a manual Vercel deployment.
 | `bun run format`      | Format the repo with Prettier                           |
 
 Before the first e2e run, install the browser: `cd tests/e2e && bunx playwright install chromium`.
+
+## Design
+
+Figma: [KuKi Evidence Dashboard](https://www.figma.com/design/mGmLPlKGNmLxhDSSjATCYs/KuKi-%E2%80%94-Dashboard?node-id=0-1&t=3zGa5UCzS8nvLtiX-1)
+
+[![Figma screens: Documents, Extracted facts, Ask, Financial year and Evaluation](docs/figma-screens.png)](https://www.figma.com/design/mGmLPlKGNmLxhDSSjATCYs/KuKi-%E2%80%94-Dashboard?node-id=0-1&t=3zGa5UCzS8nvLtiX-1)
