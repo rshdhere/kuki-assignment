@@ -1,20 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
-import localFont from "next/font/local";
+import { Figtree, IBM_Plex_Mono } from "next/font/google";
 import "@/app/globals.css";
 
-const inter = Inter({
+const figtree = Figtree({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["400", "500", "600"],
+  variable: "--font-figtree",
 });
-const instrumentSerif = Instrument_Serif({
+const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-instrument-serif",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
+  weight: "500",
+  variable: "--font-plex-mono",
 });
 
 export const metadata: Metadata = {
@@ -29,10 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${instrumentSerif.variable} ${geistMono.variable}`}
-    >
+    <html lang="en" className={`${figtree.variable} ${plexMono.variable}`}>
       <body>{children}</body>
     </html>
   );

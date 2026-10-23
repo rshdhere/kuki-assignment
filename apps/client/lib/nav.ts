@@ -11,20 +11,20 @@ export interface NavItem {
 /** Dashboard screens, shared by the sidebar and the command palette. */
 export const nav: NavItem[] = [
   {
-    href: "/",
+    href: "/documents",
     label: "Documents",
     icon: "doc",
     hint: "Upload files and follow their progress",
   },
   {
     href: "/facts",
-    label: "Facts found",
+    label: "Extracted facts",
     icon: "table",
     hint: "Every value found, with where it came from",
   },
   {
     href: "/ask",
-    label: "Ask a question",
+    label: "Ask",
     icon: "message",
     hint: "Ask questions, get answers with sources",
   },
@@ -36,7 +36,7 @@ export const nav: NavItem[] = [
   },
   {
     href: "/evaluation",
-    label: "Accuracy",
+    label: "Evaluation",
     icon: "flask",
     hint: "How KuKi was tested, and how it scored",
   },

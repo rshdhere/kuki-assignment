@@ -1,4 +1,5 @@
 import { Sidebar } from "@/components/sidebar";
+import { ToastProvider } from "@/components/toast";
 
 export default function DashboardLayout({
   children,
@@ -6,9 +7,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="app">
-      <Sidebar />
-      <div className="main">{children}</div>
-    </div>
+    <ToastProvider>
+      <div className="app">
+        <div className="win">
+          <Sidebar />
+          <div className="main">{children}</div>
+        </div>
+      </div>
+    </ToastProvider>
   );
 }

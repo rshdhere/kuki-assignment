@@ -18,7 +18,7 @@ export function UploadButton() {
         onClick={() => input.current?.click()}
         disabled={busy}
       >
-        <Icon name="upload" className="lift-icon" />
+        <Icon name="upload" />
         Upload files
       </button>
       <input

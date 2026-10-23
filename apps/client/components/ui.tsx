@@ -5,7 +5,7 @@ import type { DocumentStatus, FactOrigin } from "@kuki/types";
 import type { Mark } from "@/lib/api";
 import { statusText } from "@/lib/format";
 
-type BadgeKind = "default" | "soft" | "calc" | "warn";
+type BadgeKind = "default" | "soft" | "calc" | "warn" | "ok" | "bad";
 
 export function Badge({
   kind = "default",
@@ -15,14 +15,7 @@ export function Badge({
   children: ReactNode;
 }) {
   return (
-    <span
-      className={cn(
-        "badge",
-        kind === "soft" && "badge-soft",
-        kind === "calc" && "badge-calc",
-        kind === "warn" && "badge-warn",
-      )}
-    >
+    <span className={cn("badge", kind !== "default" && `badge-${kind}`)}>
       {children}
     </span>
   );
@@ -32,11 +25,22 @@ export function Badge({
 export function OriginBadge({ origin }: { origin: FactOrigin }) {
   return (
     <Badge kind={origin === "calculated" ? "calc" : "default"}>
-      {origin === "calculated" ? "Worked out by KuKi" : "From the document"}
+      {origin === "calculated" ? "Calculated" : "Reported"}
     </Badge>
   );
 }
 
+const TONE: Record<DocumentStatus, string> = {
+  awaiting_upload: "run",
+  queued: "",
+  extracting: "run",
+  retrying: "warn",
+  succeeded: "ok",
+  failed: "bad",
+  duplicate: "",
+};
+
+/** A document's state as a coloured chip: green ready, blue working, amber retrying, red failed. */
 export function Status({
   state,
   label,
@@ -44,22 +48,13 @@ export function Status({
   state: DocumentStatus;
   label?: string;
 }) {
-  const text = label ?? statusText[state];
   return (
-    <span className="status">
-      {state === "succeeded" && <Icon name="check-circle" color="var(--ok)" />}
-      {(state === "queued" || state === "awaiting_upload") && (
-        <Icon name="loader" color="var(--line-2)" />
-      )}
-      {state === "extracting" && (
-        <Icon name="loader" color="var(--calc)" className="spin" />
+    <span className={cn("chip-state", TONE[state])}>
+      {(state === "extracting" || state === "awaiting_upload") && (
+        <Icon name="loader" size={12} strokeWidth={3} className="spin" />
       )}
       {state === "retrying" && <CountdownRing />}
-      {state === "duplicate" && (
-        <Icon name="minus-circle" color="var(--line-2)" />
-      )}
-      {state === "failed" && <Icon name="x" color="var(--bad)" />}
-      {text}
+      {label ?? statusText[state]}
     </span>
   );
 }
@@ -69,8 +64,8 @@ export function CountdownRing() {
   return (
     <svg
       className="countdown"
-      width={16}
-      height={16}
+      width={12}
+      height={12}
       viewBox="0 0 16 16"
       aria-hidden="true"
     >
@@ -80,7 +75,7 @@ export function CountdownRing() {
         r="7"
         fill="none"
         stroke="var(--warn-line)"
-        strokeWidth="2"
+        strokeWidth="2.5"
       />
       <circle
         className="prog"
@@ -88,37 +83,53 @@ export function CountdownRing() {
         cy="8"
         r="7"
         fill="none"
-        stroke="var(--warn)"
-        strokeWidth="2"
+        stroke="currentColor"
+        strokeWidth="2.5"
         strokeLinecap="round"
       />
     </svg>
   );
 }
 
+const MARK_TEXT: Record<Mark, string> = {
+  pass: "Pass",
+  fail: "Fail",
+  partial: "Partial",
+  error: "No answer",
+};
+
 export function MarkLabel({ mark, change }: { mark: Mark; change?: string }) {
   return (
-    <span className="status">
-      {mark === "pass" && <Icon name="check" size={14} color="var(--ok)" />}
-      {(mark === "fail" || mark === "error") && (
-        <Icon name="x" size={14} color="var(--bad)" />
+    <span
+      className={cn(
+        "status",
+        mark === "pass" && "mark-pass",
+        mark === "partial" && "mark-partial",
+        (mark === "fail" || mark === "error") && "mark-fail",
       )}
-      {mark === "partial" && (
-        <Icon name="minus-circle" size={14} color="var(--warn)" />
-      )}
-      {
-        {
-          pass: "Right",
-          fail: "Wrong",
-          partial: "Partly right",
-          error: "No answer",
-        }[mark]
-      }
+    >
+      {MARK_TEXT[mark]}
       {change && (
         <span className={change === "fixed" ? "chip-ok" : "chip-bad"}>
-          {change === "fixed" ? "Fixed" : "Worse"}
+          {change === "fixed" ? "Fixed" : "Regressed"}
         </span>
       )}
+    </span>
+  );
+}
+
+/** A check result: a drawn tick or warning, then its words. */
+export function Verdict({
+  ok,
+  children,
+}: {
+  ok: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <span className={cn("status", ok ? "mark-pass" : "mark-partial")}>
+      <Icon name={ok ? "check" : "alert"} size={14} strokeWidth={2.5} />
+      {children}
     </span>
   );
 }
@@ -148,28 +159,27 @@ export function StatCard({
   value,
   unit,
   foot,
-  top,
+  tag,
+  tone,
   children,
-  muted,
 }: {
   label: string;
   value: string;
   unit?: string;
   foot?: string;
-  top?: ReactNode;
+  /** A short dark pill in the top corner naming what the number is about. */
+  tag?: string;
+  /** `hl` marks the one number to watch; `bad` marks failures. */
+  tone?: "hl" | "bad";
   children?: ReactNode;
-  muted?: boolean;
 }) {
   return (
-    <div className="card pad lift" style={{ gap: 8 }}>
+    <div className={cn("stat-card", tone)}>
       <div className="stat-top">
-        <span className="stat-label">{label}</span>
-        {top}
+        <span>{label}</span>
+        {tag && <span className="tag">{tag}</span>}
       </div>
-      <div
-        className="stat"
-        style={muted ? { color: "var(--muted)" } : undefined}
-      >
+      <div className="stat">
         {value}
         {unit && <small> {unit}</small>}
       </div>
@@ -185,14 +195,5 @@ export function CardHead({ title, desc }: { title: string; desc?: string }) {
       <h2 className="card-h">{title}</h2>
       {desc && <p className="card-d">{desc}</p>}
     </div>
-  );
-}
-
-export function FilterButton({ children }: { children: ReactNode }) {
-  return (
-    <button type="button" className="btn btn-dashed">
-      <Icon name="plus-circle" size={14} />
-      {children}
-    </button>
   );
 }

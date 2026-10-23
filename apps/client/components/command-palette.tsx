@@ -83,7 +83,8 @@ export function CommandPalette() {
                 docTypeLabel(d.docType) ??
                 (d.status === "failed" ? "Couldn't be read" : "Being read"),
               icon: "doc" as const,
-              href: d.status === "succeeded" ? `/facts?id=${d.id}` : "/",
+              href:
+                d.status === "succeeded" ? `/facts?id=${d.id}` : "/documents",
             })),
         ),
       )

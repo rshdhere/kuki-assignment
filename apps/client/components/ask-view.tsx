@@ -7,7 +7,7 @@ import { Icon } from "@/components/icon";
 import { Topbar } from "@/components/topbar";
 import { PageHeading } from "@/components/ui";
 import { api } from "@/lib/api";
-import { docName, statusLabel } from "@/lib/format";
+import { docName, isActive, statusLabel } from "@/lib/format";
 import { usePoll } from "@/lib/use-poll";
 
 const SUGGESTIONS = [
@@ -18,6 +18,12 @@ const SUGGESTIONS = [
   "Does the quality policy set a deadline for resolving customer complaints?",
   "What was the total electricity consumption in FY 2024-25?",
 ];
+
+const STATUS_DOT: Record<string, string> = {
+  answered: "var(--ok)",
+  partial: "var(--warn)",
+  conflicting_evidence: "var(--warn)",
+};
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString("en-GB", {
@@ -30,7 +36,9 @@ const when = (iso: string) =>
 export function AskView() {
   const docs = usePoll(api.documents);
   const earlier = usePoll(api.answers);
-  const ready = (docs.data ?? []).filter((d) => d.status === "succeeded");
+  const all = docs.data ?? [];
+  const ready = all.filter((d) => d.status === "succeeded");
+  const pending = all.filter((d) => isActive(d.status)).length;
 
   // null means every ready document.
   const [scope, setScope] = useState<Set<string> | null>(null);
@@ -76,14 +84,10 @@ export function AskView() {
   return (
     <>
       <Topbar
-        crumbs={[{ label: "Ask a question" }]}
+        crumbs={[{ label: "Ask" }]}
         actions={
           shown && (
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={startOver}
-            >
+            <button type="button" className="btn" onClick={startOver}>
               <Icon name="plus" />
               New question
             </button>
@@ -91,75 +95,85 @@ export function AskView() {
         }
       />
       <main className="page">
-        <PageHeading
-          title="Ask a question"
-          lede="Ask about usage, amounts, policies or a financial year. Every answer shows where in your documents it comes from."
-        />
+        {!shown && !busy && (
+          <PageHeading
+            title="Ask"
+            lede="Ask about usage, amounts, policies or a financial year. Every answer shows where in your documents it comes from."
+          />
+        )}
+
+        <form
+          onSubmit={(e) => void submit(e)}
+          style={{ display: "flex", flexDirection: "column", gap: 12 }}
+        >
+          <div className="composer">
+            <Icon
+              name="search"
+              size={20}
+              style={{ flex: "none", alignSelf: "center" }}
+            />
+            <label htmlFor="ask" className="sr">
+              Your question
+            </label>
+            <textarea
+              id="ask"
+              rows={1}
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void submit();
+                }
+              }}
+              placeholder="How much water was used in December 2025?"
+            />
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={busy || !question.trim() || selected.size === 0}
+            >
+              {busy ? "Reading…" : "Get answer"}
+            </button>
+          </div>
+          <span className="muted" style={{ fontSize: 14 }}>
+            Looking in {selected.size} of {ready.length} processed document
+            {ready.length === 1 ? "" : "s"}
+            {pending > 0 && ` · ${pending} still processing`}
+          </span>
+        </form>
+
+        {busy && (
+          <div className="runstrip" role="status">
+            <span className="strong">
+              Reading {selected.size} document
+              {selected.size === 1 ? "" : "s"}. This usually takes 10 to 60
+              seconds.
+            </span>
+            <div className="bar indet">
+              <i />
+            </div>
+          </div>
+        )}
+        {error && (
+          <div role="alert" className="alert">
+            <Icon
+              name="alert"
+              color="var(--warn-ink)"
+              style={{ flex: "none", marginTop: 3 }}
+            />
+            <div className="alert-body">{error}</div>
+          </div>
+        )}
 
         <div className="split">
           <div className="stack">
-            <form className="card composer" onSubmit={(e) => void submit(e)}>
-              <label htmlFor="ask" className="sr">
-                Your question
-              </label>
-              <textarea
-                id="ask"
-                rows={3}
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void submit();
-                  }
-                }}
-                placeholder="For example: how much water was used in December 2025?"
-              />
-              <div className="card-head">
-                <span className="muted" style={{ fontSize: 13 }}>
-                  Using {selected.size} of {ready.length} documents
-                </span>
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-sm"
-                  disabled={busy || !question.trim() || selected.size === 0}
-                >
-                  {busy ? "Reading…" : "Ask"}
-                </button>
-              </div>
-            </form>
-
-            {busy && (
-              <div className="runstrip" role="status">
-                <span className="strong">
-                  Reading {selected.size} document
-                  {selected.size === 1 ? "" : "s"}. This usually takes 10 to 60
-                  seconds.
-                </span>
-                <div className="bar indet">
-                  <i />
-                </div>
-              </div>
-            )}
-            {error && (
-              <div role="alert" className="alert">
-                <Icon
-                  name="alert"
-                  color="var(--warn)"
-                  style={{ flex: "none", marginTop: 2 }}
-                />
-                <div className="alert-body">{error}</div>
-              </div>
-            )}
-
             {shown ? (
-              <AnswerCard record={shown} documents={docs.data ?? []} />
+              <AnswerCard record={shown} documents={all} />
             ) : (
               !busy && (
                 <section className="card pad" aria-label="Example questions">
-                  <h2 className="section-h">
-                    Not sure what to ask? Try one of these
-                  </h2>
+                  <h2 className="section-h">Try one of these</h2>
                   <div className="chips">
                     {SUGGESTIONS.map((s) => (
                       <button
@@ -178,12 +192,23 @@ export function AskView() {
           </div>
 
           <div className="stack sticky">
-            <section className="card pad" aria-label="Documents to use">
-              <div>
-                <h2 className="section-h">Documents to use</h2>
-                <p className="section-d">
-                  Answers only use the ticked documents.
-                </p>
+            <section
+              className="card pad"
+              aria-label="Documents searched"
+              style={{ gap: 6 }}
+            >
+              <div className="card-head" style={{ marginBottom: 6 }}>
+                <h2 className="section-h">Documents searched</h2>
+                {scope !== null && (
+                  <button
+                    type="button"
+                    className="rowbtn muted"
+                    style={{ fontSize: 13 }}
+                    onClick={() => setScope(null)}
+                  >
+                    Use all
+                  </button>
+                )}
               </div>
               {ready.length === 0 && (
                 <span className="muted">No documents are ready yet.</span>
@@ -198,18 +223,26 @@ export function AskView() {
                     onChange={() => toggle(d.id)}
                   />
                   <label htmlFor={`scope-${d.id}`}>{docName(d.filename)}</label>
+                  <span
+                    className={selected.has(d.id) ? "mark-pass" : "muted"}
+                    style={{ fontSize: 13, whiteSpace: "nowrap" }}
+                  >
+                    {selected.has(d.id) ? "In scope" : "Not used"}
+                  </span>
                 </div>
               ))}
             </section>
 
             <section
               className="card pad"
-              aria-label="Earlier questions"
+              aria-label="Saved answers"
               style={{ gap: 8 }}
             >
-              <h2 className="section-h">Earlier questions</h2>
-              {(earlier.data ?? []).length === 0 && (
-                <span className="muted">Your questions will appear here.</span>
+              <h2 className="section-h">Saved answers</h2>
+              {earlierList.length === 0 && (
+                <span className="muted" style={{ fontSize: 14 }}>
+                  Your questions will appear here.
+                </span>
               )}
               <div className="rows" style={{ margin: "0 -12px" }}>
                 {earlierShown.map((a) => (
@@ -224,8 +257,24 @@ export function AskView() {
                     }}
                   >
                     <span className="row-title">{a.question}</span>
-                    <span className="row-sub">
-                      {statusLabel(a.status)}, {when(a.createdAt)}
+                    <span
+                      className="row-sub"
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    >
+                      <i
+                        aria-hidden="true"
+                        style={{
+                          width: 8,
+                          height: 8,
+                          flex: "none",
+                          borderRadius: "50%",
+                          background: STATUS_DOT[a.status] ?? "transparent",
+                          border: STATUS_DOT[a.status]
+                            ? 0
+                            : "1.5px solid var(--muted)",
+                        }}
+                      />
+                      {statusLabel(a.status)} · {when(a.createdAt)}
                     </span>
                   </button>
                 ))}
@@ -234,7 +283,7 @@ export function AskView() {
                 <button
                   type="button"
                   className="rowbtn"
-                  style={{ fontSize: 13, fontWeight: 500 }}
+                  style={{ fontSize: 14, fontWeight: 500 }}
                   onClick={() => setAllEarlier(!allEarlier)}
                 >
                   {allEarlier ? "Show fewer" : `Show all ${earlierList.length}`}

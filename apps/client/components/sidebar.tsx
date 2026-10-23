@@ -4,14 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { CommandPalette } from "@/components/command-palette";
-import { Icon } from "@/components/icon";
+import { Logo } from "@/components/logo";
 import { closeMobileSidebar } from "@/components/sidebar-toggle";
+import { api } from "@/lib/api";
 import { nav } from "@/lib/nav";
+import { usePoll } from "@/lib/use-poll";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const isActive = (href: string) => pathname.startsWith(href);
+  // Refreshed on each navigation, so the count stays close without its own timer.
+  const docs = usePoll(api.documents, 0, pathname);
+  const count = docs.data?.filter((d) => d.status !== "duplicate").length;
 
   // On phones the sidebar is a drawer; close it after navigating.
   useEffect(() => closeMobileSidebar(), [pathname]);
@@ -19,10 +23,8 @@ export function Sidebar() {
   return (
     <>
       <aside id="sidebar" className="side" aria-label="Sidebar">
-        <Link href="/" className="ws">
-          <span className="logo">
-            <span>K</span>
-          </span>
+        <Link href="/financial-year" className="ws">
+          <Logo />
           <span className="ws-name">
             <b>KuKi</b>
             <span>Sustainability data</span>
@@ -39,8 +41,10 @@ export function Sidebar() {
               className="nav-item"
               aria-current={isActive(item.href) ? "page" : undefined}
             >
-              <Icon name={item.icon} />
               {item.label}
+              {item.href === "/documents" && count ? (
+                <span className="nav-count">{count}</span>
+              ) : null}
             </Link>
           ))}
         </nav>

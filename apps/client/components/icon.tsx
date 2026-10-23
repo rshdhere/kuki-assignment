@@ -73,6 +73,7 @@ const paths = {
     </>
   ),
   "chevron-right": <path d="m9 18 6-6-6-6" />,
+  "chevron-down": <path d="m6 9 6 6 6-6" />,
   "chevron-left": <path d="m15 18-6-6 6-6" />,
   alert: (
     <>
@@ -93,6 +94,7 @@ const paths = {
     </>
   ),
   "arrow-up": <path d="m5 12 7-7 7 7M12 19V5" />,
+  "arrow-right": <path d="M5 12h14M12 5l7 7-7 7" />,
   "arrow-up-right": <path d="M7 17 17 7M7 7h10v10" />,
 } satisfies Record<string, ReactNode>;
 
